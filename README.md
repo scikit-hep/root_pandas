@@ -20,3 +20,9 @@ df.to_root('new.root')
 # The file contains a tree called 'default' with the 'y' and 'answer' branches
 ```
 
+## Installation
+The package is currently not on PyPI.
+To install it into your home directory with pip, run
+```bash
+pip install --user git+https://github.com/ibab/root_pandas
+```
