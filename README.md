@@ -1,7 +1,7 @@
 
 # root\_pandas
 
-A Python module that allows you to conveniently create DataFrames from ROOT files and save them again.
+A convenience wrapper around the `root_numpy` library that allows you to load and save pandas DataFrames in the ROOT format used in high energy phyics.
 
 ```python
 from pandas import DataFrame
@@ -12,6 +12,11 @@ df = DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
 df.to_root('test.root', 'tree')
 
 df_new = read_root('test.root', 'tree', ignore=['x*'])
-df['extra'] = df['y']**2
+
+# DataFrames are extremely convenient
+df['answer'] = 42
+
+df.to_root('new.root')
+# The file contains a tree called 'default' with the 'y' and 'answer' branches
 ```
 
