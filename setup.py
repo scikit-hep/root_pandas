@@ -8,8 +8,4 @@ setup(name='root_pandas',
       author_email='igor@babuschk.in',
       license='MIT',
       packages=['root_pandas'],
-      install_requires=[
-          'pandas',
-          'root_numpy',
-      ],
       zip_safe=False)
