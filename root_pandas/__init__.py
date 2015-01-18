@@ -39,6 +39,8 @@ def read_root(fname, tree_name=None, variables=None, ignore=None, chunksize=None
         A sequence of shell-patterns. Matching variables are read.
     ignore: sequence
         A sequence of shell-patterns. All matching variables are ignored (overriding the variables argument)
+    chunksize: int
+        If this parameter is specified, an iterator is returned that yields DataFrames with chunksize rows
 
     Returns
     -------
