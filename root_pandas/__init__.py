@@ -7,6 +7,8 @@ from pandas import DataFrame
 from root_numpy import root2array, list_trees
 from fnmatch import fnmatch
 from root_numpy import list_branches
+from math import ceil
+import ROOT
 
 __all__ = ['read_root']
 
@@ -21,7 +23,7 @@ def get_matching_variables(fname, tree, patterns):
                 selected.append(b)
     return selected
 
-def read_root(fname, tree_name=None, variables=None, ignore=None, *kargs, **kwargs):
+def read_root(fname, tree_name=None, variables=None, ignore=None, chunksize=None, *kargs, **kwargs):
     """
     Read a ROOT file into a pandas DataFrame.
     Further *kargs and *kwargs are passed to root_numpy's root2array.
@@ -72,11 +74,24 @@ def read_root(fname, tree_name=None, variables=None, ignore=None, *kargs, **kwar
         for var in ignored:
             all_vars.remove(var)
 
+    if chunksize:
+        f = ROOT.TFile(fname)
+        n_entries = f.Get(tree_name).GetEntries()
+        f.Close()
+        def genchunks():
+            for chunk in range(int(ceil(float(n_entries) / chunksize))):
+                arr = root2array(fname, tree_name, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, *kargs, **kwargs)
+                yield convert_to_dataframe(arr)
+        return genchunks()
+
     arr = root2array(fname, tree_name, all_vars, *kargs, **kwargs)
-    if 'index' in arr.dtype.names:
-        df = DataFrame.from_records(arr, index='index')
+    return convert_to_dataframe(arr)
+
+def convert_to_dataframe(array):
+    if 'index' in array.dtype.names:
+        df = DataFrame.from_records(array, index='index')
     else:
-        df = DataFrame.from_records(arr)
+        df = DataFrame.from_records(array)
     return df
 
 def to_root(df, fname, tree_name="default", *kargs, **kwargs):
