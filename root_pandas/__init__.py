@@ -102,7 +102,7 @@ def to_root(df, fname, tree_name="default", *kargs, **kwargs):
     """
     from root_numpy import array2root
     arr = df.to_records()
-    array2root(arr, fname, tree_name, 'recreate', *kargs, **kwargs)
+    array2root(arr, fname, tree_name, *kargs, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
