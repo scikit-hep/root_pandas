@@ -20,7 +20,7 @@ df_new.to_root('new.root')
 # The file contains a tree called 'default' with the 'x2' and 'answer' branches
 ```
 
-There is also support for working with files larger than memory:
+There is also support for working with files that don't fit into memory:
 If the `chunksize` parameter is specified, `read_root` returns an iterator that yields DataFrames, each containing up to `chunksize` rows.
 ```python
 for df in read_root('bigfile.root', 'tree', chunksize=100000):
