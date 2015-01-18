@@ -20,6 +20,15 @@ df_new.to_root('new.root')
 # The file contains a tree called 'default' with the 'x2' and 'answer' branches
 ```
 
+There is also support for working with files larger than memory:
+If the `chunksize` parameter is specified, `read_root` returns an iterator that yields DataFrames, each containing up to `chunksize` rows.
+```python
+for df in read_root('bigfile.root', 'tree', chunksize=100000):
+    # process df here
+    df.to_root('finished.root')
+```
+By default, `to_root` appends to the output file.
+
 ## Installation
 The package is currently not on PyPI.
 To install it into your home directory with pip, run
