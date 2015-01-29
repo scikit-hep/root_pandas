@@ -7,5 +7,9 @@ setup(name='root_pandas',
       author='Igor Babuschkin',
       author_email='igor@babuschk.in',
       license='MIT',
+      install_requires=[
+          'numpy',
+          'pandas',
+      ],
       packages=['root_pandas'],
       zip_safe=False)
