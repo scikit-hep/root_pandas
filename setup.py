@@ -10,6 +10,7 @@ setup(name='root_pandas',
       install_requires=[
           'numpy',
           'pandas',
+          'root_numpy',
       ],
       packages=['root_pandas'],
       zip_safe=False)
