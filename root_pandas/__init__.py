@@ -82,14 +82,14 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         >>> df = read_root('test.root', 'MyTree', columns=['A{B,C}*', 'D'], where='ABB > 100')
 
     """
-    if not tree_name:
-        branches = list_trees(fname)
+    if not tree_key:
+        branches = list_trees(path)
         if len(branches) == 1:
-            tree_name = branches[0]
+            tree_key = branches[0]
         else:
-            raise ValueError('More than one tree found in {}'.format(fname))
+            raise ValueError('More than one tree found in {}'.format(path))
 
-    branches = list_branches(fname, tree_name)
+    branches = list_branches(path, tree_key)
 
     if not columns:
         all_vars = None
@@ -100,7 +100,6 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
             columns.append('index')
         columns = list(itertools.chain.from_iterable(map(expand_braces, columns)))
         all_vars = get_matching_variables(branches, columns)
-        print(all_vars)
 
     if ignore:
         ignored = get_matching_variables(branches, ignore)
@@ -111,16 +110,16 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
             all_vars.remove(var)
 
     if chunksize:
-        f = ROOT.TFile(fname)
-        n_entries = f.Get(tree_name).GetEntries()
+        f = ROOT.TFile(path)
+        n_entries = f.Get(tree_key).GetEntries()
         f.Close()
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
-                arr = root2array(fname, tree_name, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *kargs, **kwargs)
+                arr = root2array(path, tree_key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *kargs, **kwargs)
                 yield convert_to_dataframe(arr)
         return genchunks()
 
-    arr = root2array(fname, tree_name, all_vars, selection=where, *kargs, **kwargs)
+    arr = root2array(path, tree_key, all_vars, selection=where, *kargs, **kwargs)
     return convert_to_dataframe(arr)
 
 def convert_to_dataframe(array):
@@ -130,15 +129,15 @@ def convert_to_dataframe(array):
         df = DataFrame.from_records(array)
     return df
 
-def to_root(df, fname, tree_name="default", *kargs, **kwargs):
+def to_root(df, path, tree_key="default", *kargs, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
     Parameters
     ----------
-    fname: string
+    path: string
         File path to new ROOT file (will be overwritten)
-    tree_name: string
+    tree_key: string
         Name of tree that the DataFrame will be saved as
     
     Notes
@@ -153,7 +152,7 @@ def to_root(df, fname, tree_name="default", *kargs, **kwargs):
     """
     from root_numpy import array2root
     arr = df.to_records()
-    array2root(arr, fname, tree_name, *kargs, **kwargs)
+    array2root(arr, path, tree_key, *kargs, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
