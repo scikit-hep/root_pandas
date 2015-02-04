@@ -7,17 +7,20 @@ A convenience wrapper around the `root_numpy` library that allows you to load an
 from pandas import DataFrame
 from root_pandas import read_root
 
-df = DataFrame({'x1': [1, 2, 3], 'x2': [4, 5, 6]})
+data = [1, 2, 3]
+
+df = DataFrame({'AAA': data, 'ABA': data, 'ABB': data})
 
 df.to_root('test.root', 'tree')
 
-df_new = read_root('test.root', 'tree', ignore=['*1'])
+df_new = read_root('test.root', 'tree', columns=['A{A,B}A'])
 
 # DataFrames are extremely convenient
 df_new['answer'] = 42
 
 df_new.to_root('new.root')
-# The file contains a tree called 'default' with the 'x2' and 'answer' branches
+# The file contains a tree called 'tree' with the 'AAA', 'ABA' and 'answer' branches
+# There is also an 'index' branch that persists the DataFrame's index
 ```
 
 There is also support for working with files that don't fit into memory:
