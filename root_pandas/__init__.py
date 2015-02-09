@@ -65,9 +65,9 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         The path to the root file
     tree_key: string
         The key of the tree to load.
-    columns: sequence of str
+    columns: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). Matching columns are read.
-    ignore: sequence of str
+    ignore: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). All matching columns are ignored (overriding the columns argument)
     chunksize: int
         If this parameter is specified, an iterator is returned that yields DataFrames with `chunksize` rows
@@ -92,9 +92,11 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
     branches = list_branches(path, tree_key)
 
     if not columns:
-        all_vars = None
+        all_vars = branches
     else:
         # index is always loaded if it exists
+        if isinstance(columns, basestring):
+            columns = [columns]
         if 'index' in branches:
             columns = columns[:]
             columns.append('index')
@@ -102,6 +104,8 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         all_vars = get_matching_variables(branches, columns)
 
     if ignore:
+        if isinstance(ignore, basestring):
+            ignore = [ignore]
         ignored = get_matching_variables(branches, ignore)
         ignored = list(itertools.chain.from_iterable(map(expand_braces, ignored)))
         if 'index' in ignored:
