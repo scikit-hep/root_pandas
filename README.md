@@ -28,9 +28,9 @@ If the `chunksize` parameter is specified, `read_root` returns an iterator that 
 ```python
 for df in read_root('bigfile.root', 'tree', chunksize=100000):
     # process df here
-    df.to_root('finished.root')
+    df.to_root('finished.root', mode='a')
 ```
-By default, `to_root` appends to the output file.
+By default, `to_root` erases the existing contents of the file. Use `mode='a'` to append.
 
 ## Installation
 The package is currently not on PyPI.
