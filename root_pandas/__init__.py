@@ -71,6 +71,8 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         A sequence of shell-patterns (can contain *, ?, [] or {}). All matching columns are ignored (overriding the columns argument)
     chunksize: int
         If this parameter is specified, an iterator is returned that yields DataFrames with `chunksize` rows
+    where: str
+        Only rows that match the expression will be read
 
     Returns
     -------
@@ -133,7 +135,7 @@ def convert_to_dataframe(array):
         df = DataFrame.from_records(array)
     return df
 
-def to_root(df, path, tree_key="default", *kargs, **kwargs):
+def to_root(df, path, tree_key="default", mode='w', *kargs, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
@@ -143,6 +145,8 @@ def to_root(df, path, tree_key="default", *kargs, **kwargs):
         File path to new ROOT file (will be overwritten)
     tree_key: string
         Name of tree that the DataFrame will be saved as
+    mode: string, {'w', 'a'}
+        Mode that the file should be opened in (default: 'w')
     
     Notes
     -----
@@ -154,6 +158,14 @@ def to_root(df, path, tree_key="default", *kargs, **kwargs):
     
     The DataFrame index will be saved as a branch called 'index'.
     """
+
+    if mode == 'a':
+        mode = 'update'
+    elif mode == 'w':
+        mode = 'recreate'
+    else:
+        raise ValueError('Unknown mode: {}. Must be "a" or "w".'.format(mode))
+
     from root_numpy import array2root
     arr = df.to_records()
     array2root(arr, path, tree_key, *kargs, **kwargs)
