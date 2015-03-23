@@ -38,7 +38,7 @@ def expand_braces(orig):
 
     return list(set(res))
 
-def get_matching_variables(branches, patterns):
+def get_matching_variables(branches, patterns, fail=True):
 
     selected = []
 
@@ -49,7 +49,7 @@ def get_matching_variables(branches, patterns):
                 found = True
             if fnmatch(b, p) and not b in selected:
                 selected.append(b)
-        if not found:
+        if not found and fail:
             raise ValueError("Pattern '{}' didn't match any branch".format(p))
     return selected
 
@@ -108,7 +108,7 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
     if ignore:
         if isinstance(ignore, basestring):
             ignore = [ignore]
-        ignored = get_matching_variables(branches, ignore)
+        ignored = get_matching_variables(branches, ignore, fail=False)
         ignored = list(itertools.chain.from_iterable(map(expand_braces, ignored)))
         if 'index' in ignored:
             raise ValueError('index variable is being ignored!')
