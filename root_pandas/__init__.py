@@ -168,7 +168,7 @@ def to_root(df, path, tree_key="default", mode='w', *kargs, **kwargs):
 
     from root_numpy import array2root
     arr = df.to_records()
-    array2root(arr, path, tree_key, *kargs, **kwargs)
+    array2root(arr, path, tree_key, mode=mode, *kargs, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
