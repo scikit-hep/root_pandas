@@ -97,19 +97,19 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         all_vars = branches
     else:
         # index is always loaded if it exists
-        if isinstance(columns, basestring):
+        if isinstance(columns, str):
             columns = [columns]
         if 'index' in branches:
             columns = columns[:]
             columns.append('index')
-        columns = list(itertools.chain.from_iterable(map(expand_braces, columns)))
+        columns = list(itertools.chain.from_iterable(list(map(expand_braces, columns))))
         all_vars = get_matching_variables(branches, columns)
 
     if ignore:
-        if isinstance(ignore, basestring):
+        if isinstance(ignore, str):
             ignore = [ignore]
         ignored = get_matching_variables(branches, ignore, fail=False)
-        ignored = list(itertools.chain.from_iterable(map(expand_braces, ignored)))
+        ignored = list(itertools.chain.from_iterable(list(map(expand_braces, ignored))))
         if 'index' in ignored:
             raise ValueError('index variable is being ignored!')
         for var in ignored:
