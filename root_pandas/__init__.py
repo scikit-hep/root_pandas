@@ -7,6 +7,7 @@ from pandas import DataFrame
 from root_numpy import root2array, list_trees
 from fnmatch import fnmatch
 from root_numpy import list_branches
+from root_numpy.extern.six import string_types
 import itertools
 from math import ceil
 import re
@@ -97,7 +98,7 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         all_vars = branches
     else:
         # index is always loaded if it exists
-        if isinstance(columns, str):
+        if isinstance(columns, string_types):
             columns = [columns]
         if 'index' in branches:
             columns = columns[:]
@@ -106,7 +107,7 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         all_vars = get_matching_variables(branches, columns)
 
     if ignore:
-        if isinstance(ignore, str):
+        if isinstance(ignore, string_types):
             ignore = [ignore]
         ignored = get_matching_variables(branches, ignore, fail=False)
         ignored = list(itertools.chain.from_iterable(list(map(expand_braces, ignored))))
