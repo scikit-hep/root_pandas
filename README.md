@@ -84,6 +84,6 @@ By default, `to_root` erases the existing contents of the file. Use `mode='a'` t
 for df in read_root('bigfile.root', chunksize=100000):
     df.to_root('out.root', mode='a')
 ```
-When doing this, you shouldn't forget to `os.remove` the file first, otherwise you will append more and more data to it on each run of your program.
+When doing this to stream data from one ROOT file into another, you shouldn't forget to `os.remove` the output file first, otherwise you will append more and more data to it on each run of your program.
 
 
