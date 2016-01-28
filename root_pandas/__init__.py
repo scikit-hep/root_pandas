@@ -13,7 +13,9 @@ from math import ceil
 import re
 import ROOT
 
+
 __all__ = ['read_root']
+
 
 def expand_braces(orig):
     r = r'.*(\{.+?[^\\]\})'
@@ -39,8 +41,8 @@ def expand_braces(orig):
 
     return list(set(res))
 
-def get_matching_variables(branches, patterns, fail=True):
 
+def get_matching_variables(branches, patterns, fail=True):
     selected = []
 
     for p in patterns:
@@ -48,11 +50,12 @@ def get_matching_variables(branches, patterns, fail=True):
         for b in branches:
             if fnmatch(b, p):
                 found = True
-            if fnmatch(b, p) and not b in selected:
+            if fnmatch(b, p) and b not in selected:
                 selected.append(b)
         if not found and fail:
             raise ValueError("Pattern '{}' didn't match any branch".format(p))
     return selected
+
 
 def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, *args, **kwargs):
     """
@@ -124,6 +127,7 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
         f = ROOT.TFile(path)
         n_entries = f.Get(key).GetEntries()
         f.Close()
+
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
@@ -132,6 +136,7 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
 
     arr = root2array(path, key, all_vars, selection=where, *args, **kwargs)
     return convert_to_dataframe(arr)
+
 
 def convert_to_dataframe(array):
     indices = list(filter(lambda x: x.startswith('__index__'), array.dtype.names))
@@ -150,6 +155,7 @@ def convert_to_dataframe(array):
         raise ValueError("More than one index found in file")
     return df
 
+
 def to_root(df, path, key='default', mode='w', *args, **kwargs):
     """
     Write DataFrame to a ROOT file.
@@ -162,7 +168,7 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
         Name of tree that the DataFrame will be saved as
     mode: string, {'w', 'a'}
         Mode that the file should be opened in (default: 'w')
-    
+
     Notes
     -----
 
@@ -170,7 +176,7 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
 
     >>> df = DataFrame({'x': [1,2,3], 'y': [4,5,6]})
     >>> df.to_root('test.root')
-    
+
     The DataFrame index will be saved as a branch called '__index__*',
     where * is the name of the index in the original DataFrame
     """
@@ -193,6 +199,6 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
     arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
 
+
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
-
