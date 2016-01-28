@@ -61,16 +61,16 @@ def get_matching_variables(branches, patterns, fail=True):
     return selected
 
 
-def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
+def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
     """
-    Read a ROOT file into a pandas DataFrame.
+    Read a ROOT file, or list of ROOT files, into a pandas DataFrame.
     Further *args and *kwargs are passed to root_numpy's root2array.
     If the root file contains a branch matching __index__*, it will become the DataFrame's index.
 
     Parameters
     ----------
-    path: string
-        The path to the root file.
+    paths: string or list
+        The path(s) to the root file(s)
     key: string
         The key of the tree to load.
     columns: str or sequence of str
@@ -98,16 +98,22 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
         >>> df = read_root('test.root', 'MyTree', columns=['A{B,C}*', 'D'], where='ABB > 100')
 
     """
+
+    if not isinstance(paths, list):
+        paths = [paths]
+    # Use a single file to search for trees and branches
+    seed_path = paths[0]
+
     if not key:
-        trees = list_trees(path)
+        trees = list_trees(seed_path)
         if len(trees) == 1:
             key = trees[0]
         elif len(trees) == 0:
-            raise ValueError('No trees found in {}'.format(path))
+            raise ValueError('No trees found in {}'.format(seed_path))
         else:
-            raise ValueError('More than one tree found in {}'.format(path))
+            raise ValueError('More than one tree found in {}'.format(seed_path))
 
-    branches = list_branches(path, key)
+    branches = list_branches(seed_path, key)
 
     if not columns:
         all_vars = branches
@@ -139,20 +145,22 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
         return arr
 
     if chunksize:
-        f = ROOT.TFile.Open(path)
-        n_entries = f.Get(key).GetEntries()
-        f.Close()
+        tchain = ROOT.TChain(key)
+        for path in paths:
+            tchain.Add(path)
+        n_entries = tchain.GetEntries()
+        # XXX could explicitly clean up the opened TFiles with TChain::Reset
 
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
-                arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
+                arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
                     arr = do_flatten(arr)
                 yield convert_to_dataframe(arr)
 
         return genchunks()
 
-    arr = root2array(path, key, all_vars, selection=where, *args, **kwargs)
+    arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
         arr = do_flatten(arr)
     return convert_to_dataframe(arr)

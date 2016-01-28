@@ -41,6 +41,29 @@ def test_chunked_reading():
     assert count == 3
     os.remove('tmp.root')
 
+def test_multiple_files():
+    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df.to_root('tmp1.root')
+    df.to_root('tmp2.root')
+    df.to_root('tmp3.root')
+
+    df_ = read_root(['tmp1.root', 'tmp2.root', 'tmp3.root'])
+
+    assert(len(df_) == 3 * len(df))
+
+    # Also test chunked read of multiple files
+
+    counter = 0
+    for df_ in read_root(['tmp1.root', 'tmp2.root', 'tmp3.root'], chunksize=3):
+        assert(len(df_) == 3)
+        counter += 1
+    assert(counter == 6)
+
+    os.remove('tmp1.root')
+    os.remove('tmp2.root')
+    os.remove('tmp3.root')
+
+
 def test_flatten():
     tf = ROOT.TFile('tmp.root', 'RECREATE')
     tt = ROOT.TTree("a", "a")
