@@ -1,6 +1,8 @@
 
 # root\_pandas
 
+[![Build Status](https://travis-ci.org/ibab/root_pandas.svg?branch=master)](https://travis-ci.org/ibab/root_pandas)
+
 A convenience wrapper around the `root_numpy` library that allows you to load and save pandas DataFrames in the ROOT format used in high energy phyics.
 
 ```python
