@@ -18,7 +18,10 @@ import ROOT
 from .utils import stretch
 
 
-__all__ = ['read_root']
+__all__ = [
+    'read_root',
+    'to_root',
+]
 
 
 def expand_braces(orig):
