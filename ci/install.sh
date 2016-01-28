@@ -26,4 +26,4 @@ time wget --no-check-certificate https://copy.com/rtIyUdxgjt7h/ci/root_builds/${
 time tar zxf ${ROOT_BUILD}.tar.gz
 mv ${ROOT_BUILD} root
 source root/bin/thisroot.sh
-pip install root_numpy
+pip install -r requirements.txt
