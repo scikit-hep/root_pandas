@@ -58,7 +58,7 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
     """
     Read a ROOT file into a pandas DataFrame.
     Further *args and *kwargs are passed to root_numpy's root2array.
-    If the root file contains a branch called index, it will become the DataFrame's index.
+    If the root file contains a branch called __index__, it will become the DataFrame's index.
 
     Parameters
     ----------
@@ -99,12 +99,12 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
     if not columns:
         all_vars = branches
     else:
-        # index is always loaded if it exists
+        # __index__ is always loaded if it exists
         if isinstance(columns, string_types):
             columns = [columns]
-        if 'index' in branches:
+        if '__index__' in branches:
             columns = columns[:]
-            columns.append('index')
+            columns.append('__index__')
         columns = list(itertools.chain.from_iterable(list(map(expand_braces, columns))))
         all_vars = get_matching_variables(branches, columns)
 
@@ -113,8 +113,8 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
             ignore = [ignore]
         ignored = get_matching_variables(branches, ignore, fail=False)
         ignored = list(itertools.chain.from_iterable(list(map(expand_braces, ignored))))
-        if 'index' in ignored:
-            raise ValueError('index variable is being ignored!')
+        if '__index__' in ignored:
+            raise ValueError('__index__ branch is being ignored!')
         for var in ignored:
             all_vars.remove(var)
 
@@ -132,8 +132,14 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
     return convert_to_dataframe(arr)
 
 def convert_to_dataframe(array):
-    if 'index' in array.dtype.names:
-        df = DataFrame.from_records(array, index='index')
+    if '__index__' in array.dtype.names:
+        # We store the index as __index__, but use the default
+        # pandas identifier when working with it
+        # XXX Make __index__ into a prefix for the actual index column
+        # That way we can give it the same name that it had before the
+        # to_root
+        df = DataFrame.from_records(array, index='__index__')
+        df.index.name = 'index'
     else:
         df = DataFrame.from_records(array)
     return df
@@ -159,7 +165,7 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
     >>> df = DataFrame({'x': [1,2,3], 'y': [4,5,6]})
     >>> df.to_root('test.root')
     
-    The DataFrame index will be saved as a branch called 'index'.
+    The DataFrame index will be saved as a branch called '__index__'.
     """
 
     if mode == 'a':
@@ -170,7 +176,10 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
         raise ValueError('Unknown mode: {}. Must be "a" or "w".'.format(mode))
 
     from root_numpy import array2root
-    arr = df.to_records()
+    # We don't want to modify the user's DataFrame here, so we make a shallow copy
+    df_ = df.copy(deep=False)
+    df_['__index__'] = df_.index
+    arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
