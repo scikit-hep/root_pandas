@@ -3,6 +3,8 @@
 A module that extends pandas to support the ROOT data format.
 """
 
+import numpy as np
+from numpy.lib.recfunctions import append_fields
 from pandas import DataFrame
 from root_numpy import root2array, list_trees
 from fnmatch import fnmatch
@@ -12,6 +14,8 @@ import itertools
 from math import ceil
 import re
 import ROOT
+
+from .utils import stretch
 
 
 __all__ = ['read_root']
@@ -57,7 +61,7 @@ def get_matching_variables(branches, patterns, fail=True):
     return selected
 
 
-def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, *args, **kwargs):
+def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
     """
     Read a ROOT file into a pandas DataFrame.
     Further *args and *kwargs are passed to root_numpy's root2array.
@@ -66,17 +70,23 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
     Parameters
     ----------
     path: string
-        The path to the root file
+        The path to the root file.
     key: string
         The key of the tree to load.
     columns: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). Matching columns are read.
     ignore: str or sequence of str
-        A sequence of shell-patterns (can contain *, ?, [] or {}). All matching columns are ignored (overriding the columns argument)
+        A sequence of shell-patterns (can contain *, ?, [] or {}). All matching columns are ignored (overriding the columns argument).
     chunksize: int
-        If this parameter is specified, an iterator is returned that yields DataFrames with `chunksize` rows
+        If this parameter is specified, an iterator is returned that yields DataFrames with `chunksize` rows.
     where: str
-        Only rows that match the expression will be read
+        Only rows that match the expression will be read.
+    flatten: bool
+        If set to True, will use root_numpy.stretch to flatten arrays in the root file into individual entries.
+        All arrays specified in the columns must have the same length for this to work.
+        Be careful if you combine this with chunksize, as chunksize will refer to the number of unflattened entries,
+        so you will be iterating over a number of entries that is potentially larger than chunksize.
+        The index of each element within its former array will be saved in the __array_index column.
 
     Returns
     -------
@@ -89,10 +99,10 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
 
     """
     if not key:
-        branches = list_trees(path)
-        if len(branches) == 1:
-            key = branches[0]
-        elif len(branches) == 0:
+        trees = list_trees(path)
+        if len(trees) == 1:
+            key = trees[0]
+        elif len(trees) == 0:
             raise ValueError('No trees found in {}'.format(path))
         else:
             raise ValueError('More than one tree found in {}'.format(path))
@@ -123,18 +133,28 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
         for var in ignored:
             all_vars.remove(var)
 
+    def do_flatten(arr):
+        arr_, idx = stretch(arr, return_indices=True)
+        arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
+        return arr
+
     if chunksize:
-        f = ROOT.TFile(path)
+        f = ROOT.TFile.Open(path)
         n_entries = f.Get(key).GetEntries()
         f.Close()
 
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
+                if flatten:
+                    arr = do_flatten(arr)
                 yield convert_to_dataframe(arr)
+
         return genchunks()
 
     arr = root2array(path, key, all_vars, selection=where, *args, **kwargs)
+    if flatten:
+        arr = do_flatten(arr)
     return convert_to_dataframe(arr)
 
 

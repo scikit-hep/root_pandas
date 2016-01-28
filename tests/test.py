@@ -2,6 +2,8 @@ import pandas as pd
 from root_pandas import read_root
 from root_numpy import list_branches
 from pandas.util.testing import assert_frame_equal
+import numpy as np
+import ROOT
 import os
 
 def test_read_write():
@@ -38,4 +40,36 @@ def test_chunked_reading():
 
     assert count == 3
     os.remove('tmp.root')
+
+def test_flatten():
+    tf = ROOT.TFile('tmp.root', 'RECREATE')
+    tt = ROOT.TTree("a", "a")
+
+    length = np.array([3])
+    x = np.array([0, 1, 2], dtype='float64')
+    tt.Branch('length', length, 'length/I')
+    tt.Branch('x', x, 'x[length]/D')
+
+    tt.Fill()
+    x[0] = 3
+    x[1] = 4
+    x[2] = 5
+    tt.Fill()
+    
+    tf.Write()
+    tf.Close()
+
+    branches = list_branches('tmp.root')
+
+    df_ = read_root('tmp.root', flatten=True)
+
+    assert('__array_index' in df_.columns)
+    assert(len(df_) == 6)
+    assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
+
+    # Also flatten chunked data
+
+    for df_ in read_root('tmp.root', flatten=True, chunksize=1):
+        assert(len(df_) == 3)
+        assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
 
