@@ -11,5 +11,6 @@ script: nosetests
 #after_success:
 #    - time coveralls
 cache: apt
+sudo: true
 notifications:
     email: false
