@@ -89,6 +89,8 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         branches = list_trees(path)
         if len(branches) == 1:
             tree_key = branches[0]
+        elif len(branches) == 0:
+            raise ValueError('No trees found in {}'.format(path))
         else:
             raise ValueError('More than one tree found in {}'.format(path))
 
