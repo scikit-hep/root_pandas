@@ -13,9 +13,9 @@ def test_read_write():
 def test_persistent_index():
     df = pd.DataFrame({'index': [42, 0, 1], 'x': [1,2,3]})
     df = df.set_index('index')
+    df.index.name = 'MyAwesomeName'
     df.to_root('tmp.root')
-    print(list_branches('tmp.root'))
-    assert('__index__' in list_branches('tmp.root'))
+    assert('__index__MyAwesomeName' in list_branches('tmp.root'))
     df_ = read_root('tmp.root')
     assert_frame_equal(df, df_)
     os.remove('tmp.root')
