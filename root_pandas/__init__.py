@@ -54,10 +54,10 @@ def get_matching_variables(branches, patterns, fail=True):
             raise ValueError("Pattern '{}' didn't match any branch".format(p))
     return selected
 
-def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, *kargs, **kwargs):
+def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, *args, **kwargs):
     """
     Read a ROOT file into a pandas DataFrame.
-    Further *kargs and *kwargs are passed to root_numpy's root2array.
+    Further *args and *kwargs are passed to root_numpy's root2array.
     If the root file contains a branch called index, it will become the DataFrame's index.
 
     Parameters
@@ -124,11 +124,11 @@ def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=N
         f.Close()
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
-                arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *kargs, **kwargs)
+                arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 yield convert_to_dataframe(arr)
         return genchunks()
 
-    arr = root2array(path, key, all_vars, selection=where, *kargs, **kwargs)
+    arr = root2array(path, key, all_vars, selection=where, *args, **kwargs)
     return convert_to_dataframe(arr)
 
 def convert_to_dataframe(array):
@@ -138,7 +138,7 @@ def convert_to_dataframe(array):
         df = DataFrame.from_records(array)
     return df
 
-def to_root(df, path, key='default', mode='w', *kargs, **kwargs):
+def to_root(df, path, key='default', mode='w', *args, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
@@ -154,7 +154,7 @@ def to_root(df, path, key='default', mode='w', *kargs, **kwargs):
     Notes
     -----
 
-    Further *kargs and *kwargs are passed to root_numpy's array2root.
+    Further *args and *kwargs are passed to root_numpy's array2root.
 
     >>> df = DataFrame({'x': [1,2,3], 'y': [4,5,6]})
     >>> df.to_root('test.root')
@@ -171,7 +171,7 @@ def to_root(df, path, key='default', mode='w', *kargs, **kwargs):
 
     from root_numpy import array2root
     arr = df.to_records()
-    array2root(arr, path, key, mode=mode, *kargs, **kwargs)
+    array2root(arr, path, key, mode=mode, *args, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
