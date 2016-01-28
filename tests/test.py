@@ -20,3 +20,22 @@ def test_persistent_index():
     assert_frame_equal(df, df_)
     os.remove('tmp.root')
 
+    # See what happens if the index has no name
+    df = pd.DataFrame({'x': [1,2,3]})
+    df.to_root('tmp.root')
+    df_ = read_root('tmp.root')
+    assert_frame_equal(df, df_)
+    os.remove('tmp.root')
+
+def test_chunked_reading():
+    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df.to_root('tmp.root')
+
+    count = 0
+    for df_ in read_root('tmp.root', chunksize=2):
+        assert(not df_.empty)
+        count += 1
+
+    assert count == 3
+    os.remove('tmp.root')
+
