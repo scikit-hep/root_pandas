@@ -54,7 +54,7 @@ def get_matching_variables(branches, patterns, fail=True):
             raise ValueError("Pattern '{}' didn't match any branch".format(p))
     return selected
 
-def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, where=None, *kargs, **kwargs):
+def read_root(path, key=None, columns=None, ignore=None, chunksize=None, where=None, *kargs, **kwargs):
     """
     Read a ROOT file into a pandas DataFrame.
     Further *kargs and *kwargs are passed to root_numpy's root2array.
@@ -64,7 +64,7 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
     ----------
     path: string
         The path to the root file
-    tree_key: string
+    key: string
         The key of the tree to load.
     columns: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). Matching columns are read.
@@ -85,16 +85,16 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
         >>> df = read_root('test.root', 'MyTree', columns=['A{B,C}*', 'D'], where='ABB > 100')
 
     """
-    if not tree_key:
+    if not key:
         branches = list_trees(path)
         if len(branches) == 1:
-            tree_key = branches[0]
+            key = branches[0]
         elif len(branches) == 0:
             raise ValueError('No trees found in {}'.format(path))
         else:
             raise ValueError('More than one tree found in {}'.format(path))
 
-    branches = list_branches(path, tree_key)
+    branches = list_branches(path, key)
 
     if not columns:
         all_vars = branches
@@ -120,15 +120,15 @@ def read_root(path, tree_key=None, columns=None, ignore=None, chunksize=None, wh
 
     if chunksize:
         f = ROOT.TFile(path)
-        n_entries = f.Get(tree_key).GetEntries()
+        n_entries = f.Get(key).GetEntries()
         f.Close()
         def genchunks():
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
-                arr = root2array(path, tree_key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *kargs, **kwargs)
+                arr = root2array(path, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *kargs, **kwargs)
                 yield convert_to_dataframe(arr)
         return genchunks()
 
-    arr = root2array(path, tree_key, all_vars, selection=where, *kargs, **kwargs)
+    arr = root2array(path, key, all_vars, selection=where, *kargs, **kwargs)
     return convert_to_dataframe(arr)
 
 def convert_to_dataframe(array):
@@ -138,7 +138,7 @@ def convert_to_dataframe(array):
         df = DataFrame.from_records(array)
     return df
 
-def to_root(df, path, tree_key="default", mode='w', *kargs, **kwargs):
+def to_root(df, path, key='default', mode='w', *kargs, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
@@ -146,7 +146,7 @@ def to_root(df, path, tree_key="default", mode='w', *kargs, **kwargs):
     ----------
     path: string
         File path to new ROOT file (will be overwritten)
-    tree_key: string
+    key: string
         Name of tree that the DataFrame will be saved as
     mode: string, {'w', 'a'}
         Mode that the file should be opened in (default: 'w')
@@ -171,7 +171,7 @@ def to_root(df, path, tree_key="default", mode='w', *kargs, **kwargs):
 
     from root_numpy import array2root
     arr = df.to_records()
-    array2root(arr, path, tree_key, mode=mode, *kargs, **kwargs)
+    array2root(arr, path, key, mode=mode, *kargs, **kwargs)
 
 # Patch pandas DataFrame to support to_root method
 DataFrame.to_root = to_root
