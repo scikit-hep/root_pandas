@@ -12,6 +12,29 @@ def test_read_write():
     df_ = read_root('tmp.root')
     os.remove('tmp.root')
 
+    df.to_root('tmp.root', key='mykey')
+    df_ = read_root('tmp.root', key='mykey')
+    assert_frame_equal(df, df_)
+    os.remove('tmp.root')
+
+    tf = ROOT.TFile('tmp.root', 'recreate')
+    tt = ROOT.TTree("a", "a")
+
+    x = np.array([1])
+    x[0] = 42
+    tt.Branch('x', x, 'x/D')
+
+    tt.Fill()
+    x[0] = 1
+    tt.Fill()
+    tt.Write()
+    tf.Close()
+
+    # Read when no index is present
+    df = read_root('tmp.root', columns=['x'])
+    os.remove('tmp.root')
+
+
 def test_persistent_index():
     df = pd.DataFrame({'index': [42, 0, 1], 'x': [1,2,3]})
     df = df.set_index('index')

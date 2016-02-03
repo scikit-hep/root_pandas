@@ -125,7 +125,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             columns = [columns]
         # __index__* is always loaded if it exists
         # XXX Figure out what should happen with multi-dimensional indices
-        index_branches = filter(lambda x: x.startswith('__index__'), branches)
+        index_branches = list(filter(lambda x: x.startswith('__index__'), branches))
         if index_branches:
             columns = columns[:]
             columns.append(index_branches[0])
