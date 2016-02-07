@@ -119,3 +119,5 @@ def test_flatten():
         assert(len(df_) == 3)
         assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
 
+    os.remove('tmp.root')
+
