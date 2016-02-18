@@ -137,7 +137,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             ignore = [ignore]
         ignored = get_matching_variables(branches, ignore, fail=False)
         ignored = list(itertools.chain.from_iterable(list(map(expand_braces, ignored))))
-        if any(map(lambda x: x.startswith('__index__', ignored))):
+        if any(map(lambda x: x.startswith('__index__'), ignored)):
             raise ValueError('__index__* branch is being ignored!')
         for var in ignored:
             all_vars.remove(var)

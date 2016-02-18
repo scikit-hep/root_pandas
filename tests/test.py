@@ -34,6 +34,22 @@ def test_read_write():
     df = read_root('tmp.root', columns=['x'])
     os.remove('tmp.root')
 
+def test_ignore_columns():
+    df = pd.DataFrame({'x': [1,2,3], 'y1': [2,3,4], 'y2': [3,4,5]})
+    df.to_root('tmp.root')
+
+    df = read_root('tmp.root', ignore=['y1'])
+    assert(df.columns[0] == 'x' and df.columns[1] == 'y2')
+
+    df = read_root('tmp.root', ignore=['y*'])
+    assert(df.columns == ['x'])
+
+    # Test interaction with columns kwarg
+    df = read_root('tmp.root', columns=['y*'], ignore=['*1'])
+    assert(df.columns == ['y2'])
+
+    os.remove('tmp.root')
+
 
 def test_persistent_index():
     df = pd.DataFrame({'index': [42, 0, 1], 'x': [1,2,3]})
