@@ -154,7 +154,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         col_names = np.array(arr.dtype.names)
         good_names = col_names[good_cols]
         bad_names = col_names[~good_cols]
-        if bad_names:
+        if not bad_names.size == 0:
             warnings.warn("Ignored the following non-scalar branches: {bad_names}"
                           .format(bad_names=", ".join(bad_names)), UserWarning)
         return arr[good_names]
