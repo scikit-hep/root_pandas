@@ -148,16 +148,15 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
         return arr
 
-    def remove_high_dimensions(arr):
-        allowed_dimensions = [0]
+    def remove_nonscalar(arr):
         first_row = arr[0]
-        good_cols = [True if x.ndim in allowed_dimensions else False for x in first_row]
-        col_names = np.array(list(arr.dtype.names))
-        good_names = col_names[np.array(good_cols)]
-        bad_names = col_names[np.array([not x for x in good_cols])]
-        for bad_name in bad_names:
-            warnings.warn("Dropped {bad_name} branch because dimension is unfit for DataFrame"
-                          .format(bad_name=bad_name), UserWarning)
+        good_cols = np.array([x.ndim == 0 for x in first_row])
+        col_names = np.array(arr.dtype.names)
+        good_names = col_names[good_cols]
+        bad_names = col_names[~good_cols]
+        if bad_names:
+            warnings.warn("Ignored the following non-scalar branches: {bad_names}"
+                          .format(bad_names=", ".join(bad_names)), UserWarning)
         return arr[good_names]
 
     if chunksize:
@@ -172,7 +171,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
                     arr = do_flatten(arr)
-                arr = remove_high_dimensions(arr)
+                arr = remove_nonscalar(arr)
                 yield convert_to_dataframe(arr)
 
         return genchunks()
@@ -180,7 +179,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
         arr = do_flatten(arr)
-    arr = remove_high_dimensions(arr)
+    arr = remove_nonscalar(arr)
     return convert_to_dataframe(arr)
 
 
