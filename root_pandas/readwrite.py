@@ -14,6 +14,7 @@ import itertools
 from math import ceil
 import re
 import ROOT
+import warnings
 
 from .utils import stretch
 
@@ -147,6 +148,17 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
         return arr
 
+    def remove_high_dimensions(arr):
+        allowed_dimensions = [0]
+        first_row = arr[0]
+        good_cols = [ True if x.ndim in allowed_dimensions else False for x in first_row]
+        col_names = np.array(list(arr.dtype.names))
+        good_names = col_names[np.array(good_cols)]
+        bad_names = col_names[np.array([ not x for x in good_cols])]
+        for bad_name in bad_names:
+            warnings.warn("Dropped {bad_name} branch because dimension is unfit for DataFrame".format(bad_name=bad_name), UserWarning)
+        return arr[good_names]
+
     if chunksize:
         tchain = ROOT.TChain(key)
         for path in paths:
@@ -159,6 +171,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
                     arr = do_flatten(arr)
+                arr = remove_high_dimensions(arr)
                 yield convert_to_dataframe(arr)
 
         return genchunks()
@@ -166,6 +179,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
         arr = do_flatten(arr)
+    arr = remove_high_dimensions(arr)
     return convert_to_dataframe(arr)
 
 
