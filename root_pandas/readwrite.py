@@ -14,6 +14,7 @@ import itertools
 from math import ceil
 import re
 import ROOT
+import warnings
 
 from .utils import stretch
 
@@ -147,6 +148,17 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
         return arr
 
+    def remove_nonscalar(arr):
+        first_row = arr[0]
+        good_cols = np.array([x.ndim == 0 for x in first_row])
+        col_names = np.array(arr.dtype.names)
+        good_names = col_names[good_cols]
+        bad_names = col_names[~good_cols]
+        if not bad_names.size == 0:
+            warnings.warn("Ignored the following non-scalar branches: {bad_names}"
+                          .format(bad_names=", ".join(bad_names)), UserWarning)
+        return arr[good_names]
+
     if chunksize:
         tchain = ROOT.TChain(key)
         for path in paths:
@@ -159,6 +171,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
                     arr = do_flatten(arr)
+                arr = remove_nonscalar(arr)
                 yield convert_to_dataframe(arr)
 
         return genchunks()
@@ -166,6 +179,7 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
         arr = do_flatten(arr)
+    arr = remove_nonscalar(arr)
     return convert_to_dataframe(arr)
 
 
