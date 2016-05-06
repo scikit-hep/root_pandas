@@ -151,12 +151,13 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     def remove_high_dimensions(arr):
         allowed_dimensions = [0]
         first_row = arr[0]
-        good_cols = [ True if x.ndim in allowed_dimensions else False for x in first_row]
+        good_cols = [True if x.ndim in allowed_dimensions else False for x in first_row]
         col_names = np.array(list(arr.dtype.names))
         good_names = col_names[np.array(good_cols)]
-        bad_names = col_names[np.array([ not x for x in good_cols])]
+        bad_names = col_names[np.array([not x for x in good_cols])]
         for bad_name in bad_names:
-            warnings.warn("Dropped {bad_name} branch because dimension is unfit for DataFrame".format(bad_name=bad_name), UserWarning)
+            warnings.warn("Dropped {bad_name} branch because dimension is unfit for DataFrame"
+                          .format(bad_name=bad_name), UserWarning)
         return arr[good_names]
 
     if chunksize:
