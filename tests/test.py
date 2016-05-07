@@ -137,3 +137,27 @@ def test_flatten():
 
     os.remove('tmp.root')
 
+def test_drop_nonscalar_columns():
+    array = np.array([1, 2, 3])
+    matrix = np.array([[1, 2, 3], [4, 5, 6]])
+
+    dt = np.dtype([
+        ('a', 'i4'),
+        ('b', 'int64', array.shape),
+        ('c', 'int64', matrix.shape)
+        ])
+    arr = np.array([(3, array, matrix), (2, array, matrix)], dtype=dt)
+
+    path = 'tmp.root'
+    from root_numpy import array2root
+    array2root(arr, path, 'ntuple', mode='recreate')
+
+    df = read_root(path, flatten=False)
+    # the above line throws an error if flatten=True because nonscalar columns
+    # are dropped only after the flattening is applied. However, the flattening
+    # algorithm can not deal with arrays of more than one dimension.
+    assert(len(df.columns) == 1)
+    assert(np.all(df.index.values == np.array([0, 1])))
+    assert(np.all(df.a.values == np.array([3, 2])))
+
+    os.remove('tmp.root')
