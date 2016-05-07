@@ -6,6 +6,7 @@ from pandas.util.testing import assert_frame_equal
 import numpy as np
 import ROOT
 import os
+import warnings
 
 def test_read_write():
     df = pd.DataFrame({'x': [1,2,3]})
@@ -137,12 +138,12 @@ def test_flatten():
         assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
 
     # Also test deprecated behaviour
-
-    df_ = read_root('tmp.root', flatten=True)
-
-    assert('__array_index' in df_.columns)
-    assert(len(df_) == 6)
-    assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_ = read_root('tmp.root', flatten=True)
+        assert('__array_index' in df_.columns)
+        assert(len(df_) == 6)
+        assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
 
 
     os.remove('tmp.root')
