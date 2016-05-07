@@ -14,6 +14,7 @@ import itertools
 from math import ceil
 import re
 import ROOT
+import warnings
 
 from .utils import stretch
 
@@ -169,14 +170,27 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     return convert_to_dataframe(arr)
 
 
+
 def convert_to_dataframe(array):
-    indices = list(filter(lambda x: x.startswith('__index__'), array.dtype.names))
+
+    def get_nonscalar_columns(array):
+        first_row = array[0]
+        bad_cols = np.array([x.ndim != 0 for x in first_row])
+        col_names = np.array(array.dtype.names)
+        bad_names = col_names[bad_cols]
+        if not bad_names.size == 0:
+            warnings.warn("Ignored the following non-scalar branches: {bad_names}"
+                          .format(bad_names=", ".join(bad_names)), UserWarning)
+        return list(bad_names)
+
+    nonscalar_columns = get_nonscalar_columns(array)
+    indices = list(filter(lambda x: x.startswith('__index__') and x not in nonscalar_columns, array.dtype.names))
     if len(indices) == 0:
-        df = DataFrame.from_records(array)
+        df = DataFrame.from_records(array, exclude=nonscalar_columns)
     elif len(indices) == 1:
         # We store the index under the __index__* branch, where
         # * is the name of the index
-        df = DataFrame.from_records(array, index=indices[0])
+        df = DataFrame.from_records(array, index=indices[0], exclude=nonscalar_columns)
         index_name = indices[0][len('__index__'):]
         if not index_name:
             # None means the index has no name
