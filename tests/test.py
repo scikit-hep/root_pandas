@@ -124,7 +124,7 @@ def test_flatten():
 
     branches = list_branches('tmp.root')
 
-    df_ = read_root('tmp.root', flatten=True)
+    df_ = read_root('tmp.root', flatten=['x'])
 
     assert('__array_index' in df_.columns)
     assert(len(df_) == 6)
@@ -132,9 +132,18 @@ def test_flatten():
 
     # Also flatten chunked data
 
-    for df_ in read_root('tmp.root', flatten=True, chunksize=1):
+    for df_ in read_root('tmp.root', flatten=['x'], chunksize=1):
         assert(len(df_) == 3)
         assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
+
+    # Also test deprecated behaviour
+
+    df_ = read_root('tmp.root', flatten=True)
+
+    assert('__array_index' in df_.columns)
+    assert(len(df_) == 6)
+    assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
+
 
     os.remove('tmp.root')
 

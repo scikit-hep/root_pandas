@@ -85,9 +85,9 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         If this parameter is specified, an iterator is returned that yields DataFrames with `chunksize` rows.
     where: str
         Only rows that match the expression will be read.
-    flatten: bool
-        If set to True, will use root_numpy.stretch to flatten arrays in the root file into individual entries.
-        All arrays specified in the columns must have the same length for this to work.
+    flatten: sequence of str
+        A sequence of column names. Will use root_numpy.stretch to flatten arrays in the specified columns into
+        individual entries. All arrays specified in the columns must have the same length for this to work.
         Be careful if you combine this with chunksize, as chunksize will refer to the number of unflattened entries,
         so you will be iterating over a number of entries that is potentially larger than chunksize.
         The index of each element within its former array will be saved in the __array_index column.
@@ -143,8 +143,8 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         for var in ignored:
             all_vars.remove(var)
 
-    def do_flatten(arr):
-        arr_, idx = stretch(arr, return_indices=True)
+    def do_flatten(arr, fields):
+        arr_, idx = stretch(arr, fields=fields, return_indices=True)
         arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
         return arr
 
@@ -159,14 +159,26 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
-                    arr = do_flatten(arr)
+                    if flatten is True:
+                        # catch old behaviour, to be removed
+                        warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
+                                      "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
+                        arr = do_flatten(arr, fields=None)
+                    else:
+                        arr = do_flatten(arr, fields=flatten)
                 yield convert_to_dataframe(arr)
 
         return genchunks()
 
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
-        arr = do_flatten(arr)
+        if flatten is True:
+            # catch old behaviour, to be removed
+            warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like"
+                          "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
+            arr = do_flatten(arr, fields=None)
+        else:
+            arr = do_flatten(arr, fields=flatten)
     return convert_to_dataframe(arr)
 
 
