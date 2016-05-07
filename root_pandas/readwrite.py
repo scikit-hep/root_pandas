@@ -172,11 +172,13 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
 
 
 
-
 def convert_to_dataframe(array):
 
     def get_nonscalar_columns(array):
         first_row = array[0]
+        print array.dtype.names
+        print array.dtype
+        print first_row
         bad_cols = np.array([x.ndim != 0 for x in first_row])
         col_names = np.array(array.dtype.names)
         bad_names = col_names[bad_cols]

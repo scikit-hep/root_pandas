@@ -1,6 +1,7 @@
 import pandas as pd
 from root_pandas import read_root
 from root_numpy import list_branches
+from root_numpy import array2root
 from pandas.util.testing import assert_frame_equal
 import numpy as np
 import ROOT
@@ -140,24 +141,30 @@ def test_flatten():
 def test_drop_nonscalar_columns():
     array = np.array([1, 2, 3])
     matrix = np.array([[1, 2, 3], [4, 5, 6]])
+    bool_matrix = np.array([[True, False, True], [True, True, True]])
 
     dt = np.dtype([
         ('a', 'i4'),
         ('b', 'int64', array.shape),
-        ('c', 'int64', matrix.shape)
+        ('c', 'int64', matrix.shape),
+        ('d', 'bool_'),
+        ('e', 'bool_', matrix.shape)
         ])
-    arr = np.array([(3, array, matrix), (2, array, matrix)], dtype=dt)
+    arr = np.array([
+        (3, array, matrix, True, bool_matrix),
+        (2, array, matrix, False, bool_matrix)],
+        dtype=dt)
 
     path = 'tmp.root'
-    from root_numpy import array2root
     array2root(arr, path, 'ntuple', mode='recreate')
 
     df = read_root(path, flatten=False)
     # the above line throws an error if flatten=True because nonscalar columns
     # are dropped only after the flattening is applied. However, the flattening
     # algorithm can not deal with arrays of more than one dimension.
-    assert(len(df.columns) == 1)
+    assert(len(df.columns) == 2)
     assert(np.all(df.index.values == np.array([0, 1])))
     assert(np.all(df.a.values == np.array([3, 2])))
+    assert(np.all(df.d.values == np.array([True, False])))
 
-    os.remove('tmp.root')
+    os.remove(path)
