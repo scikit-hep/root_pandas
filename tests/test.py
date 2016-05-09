@@ -168,3 +168,23 @@ def test_drop_nonscalar_columns():
     assert(np.all(df.d.values == np.array([True, False])))
 
     os.remove(path)
+
+def test_noexpand_prefix():
+    xs = np.array([1, 2, 3])
+    df = pd.DataFrame({'x': xs})
+    df.to_root('tmp.root')
+
+    # Not using the prefix should throw, as there's no matching branch name
+    try:
+        df = read_root('tmp.root', columns=['2*x'])
+    except ValueError:
+        pass
+    else:
+        assert False
+
+    # Could also use TMath::Sqrt here
+    df = read_root('tmp.root', columns=['noexpand:2*sqrt(x)'])
+    # Note that the column name shouldn't have the noexpand prefix
+    assert np.all(df['2*sqrt(x)'].values == 2*np.sqrt(xs))
+
+    os.remove('tmp.root')

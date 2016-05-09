@@ -24,6 +24,8 @@ __all__ = [
     'to_root',
 ]
 
+NOEXPAND_PREFIX = 'noexpand:'
+
 
 def expand_braces(orig):
     r = r'.*(\{.+?[^\\]\})'
@@ -63,6 +65,25 @@ def get_matching_variables(branches, patterns, fail=True):
         if not found and fail:
             raise ValueError("Pattern '{}' didn't match any branch".format(p))
     return selected
+
+
+def filter_noexpand_columns(columns):
+    """Return columns not containing and containing the noexpand prefix.
+
+    Parameters
+    ----------
+    columns: sequence of str
+      A sequence of strings to be split
+
+    Returns
+    -------
+      Two lists, the first containing strings without the noexpand prefix, the
+      second containing those that do with the prefix filtered out.
+    """
+    prefix_len = len(NOEXPAND_PREFIX)
+    noexpand = [c[prefix_len:] for c in columns if c.startswith(NOEXPAND_PREFIX)]
+    other = [c for c in columns if not c.startswith(NOEXPAND_PREFIX)]
+    return other, noexpand
 
 
 def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
@@ -130,8 +151,9 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         if index_branches:
             columns = columns[:]
             columns.append(index_branches[0])
+        columns, noexpand = filter_noexpand_columns(columns)
         columns = list(itertools.chain.from_iterable(list(map(expand_braces, columns))))
-        all_vars = get_matching_variables(branches, columns)
+        all_vars = get_matching_variables(branches, columns) + noexpand
 
     if ignore:
         if isinstance(ignore, string_types):
