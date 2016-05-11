@@ -50,6 +50,13 @@ def expand_braces(orig):
     return list(set(res))
 
 
+def get_nonscalar_columns(array):
+    first_row = array[0]
+    bad_cols = np.array([x.ndim != 0 for x in first_row])
+    col_names = np.array(array.dtype.names)
+    bad_names = col_names[bad_cols]
+    return list(bad_names)
+
 def get_matching_variables(branches, patterns, fail=True):
     selected = []
 
@@ -143,8 +150,19 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         for var in ignored:
             all_vars.remove(var)
 
-    def do_flatten(arr, fields):
-        arr_, idx = stretch(arr, fields=fields, return_indices=True)
+    def do_flatten(arr, flatten):
+        if flatten is True:
+            warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
+                          "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
+            arr_, idx = stretch(arr, return_indices=True)
+        else:
+            nonscalar = get_nonscalar_columns(arr)
+            fields = [x for x in arr.dtype.names if (x not in nonscalar or x in flatten)]
+            will_drop = [x for x in arr.dtype.names if x not in fields]
+            if will_drop:
+                warnings.warn("Ignored the following non-scalar branches: {bad_names}"
+                      .format(bad_names=", ".join(will_drop)), UserWarning)
+            arr_, idx = stretch(arr, fields=fields, return_indices=True)
         arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
         return arr
 
@@ -159,43 +177,22 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
-                    if flatten is True:
-                        # catch old behaviour, to be removed
-                        warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
-                                      "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
-                        arr = do_flatten(arr, fields=None)
-                    else:
-                        arr = do_flatten(arr, fields=flatten)
+                    arr = do_flatten(arr, flatten)
                 yield convert_to_dataframe(arr)
-
         return genchunks()
 
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
-        if flatten is True:
-            # catch old behaviour, to be removed
-            warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like"
-                          "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
-            arr = do_flatten(arr, fields=None)
-        else:
-            arr = do_flatten(arr, fields=flatten)
+        arr = do_flatten(arr, flatten)
     return convert_to_dataframe(arr)
 
 
 
 def convert_to_dataframe(array):
-
-    def get_nonscalar_columns(array):
-        first_row = array[0]
-        bad_cols = np.array([x.ndim != 0 for x in first_row])
-        col_names = np.array(array.dtype.names)
-        bad_names = col_names[bad_cols]
-        if not bad_names.size == 0:
-            warnings.warn("Ignored the following non-scalar branches: {bad_names}"
-                          .format(bad_names=", ".join(bad_names)), UserWarning)
-        return list(bad_names)
-
     nonscalar_columns = get_nonscalar_columns(array)
+    if nonscalar_columns:
+        warnings.warn("Ignored the following non-scalar branches: {bad_names}"
+                      .format(bad_names=", ".join(nonscalar_columns)), UserWarning)
     indices = list(filter(lambda x: x.startswith('__index__') and x not in nonscalar_columns, array.dtype.names))
     if len(indices) == 0:
         df = DataFrame.from_records(array, exclude=nonscalar_columns)
