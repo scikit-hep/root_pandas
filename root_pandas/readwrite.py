@@ -100,6 +100,9 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         The key of the tree to load.
     columns: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). Matching columns are read.
+        The columns beginning with `noexpand:` are not interpreted as shell-patterns,
+        allowing formula columns such as `noexpand:2*x`. The column in the returned DataFrame
+        will not have the `noexpand:` prefix.
     ignore: str or sequence of str
         A sequence of shell-patterns (can contain *, ?, [] or {}). All matching columns are ignored (overriding the columns argument).
     chunksize: int
