@@ -6,6 +6,7 @@ from pandas.util.testing import assert_frame_equal
 import numpy as np
 import ROOT
 import os
+import warnings
 
 def test_read_write():
     df = pd.DataFrame({'x': [1,2,3]})
@@ -110,13 +111,17 @@ def test_flatten():
 
     length = np.array([3])
     x = np.array([0, 1, 2], dtype='float64')
+    y = np.array([6, 7, 8], dtype='float64')
     tt.Branch('length', length, 'length/I')
     tt.Branch('x', x, 'x[length]/D')
-
+    tt.Branch('y', y, 'y[length]/D')
     tt.Fill()
     x[0] = 3
     x[1] = 4
     x[2] = 5
+    y[0] = 9
+    y[1] = 10
+    y[2] = 11
     tt.Fill()
     
     tf.Write()
@@ -124,19 +129,50 @@ def test_flatten():
 
     branches = list_branches('tmp.root')
 
-    df_ = read_root('tmp.root', flatten=True)
 
+    # flatten one out of two array branches
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_ = read_root('tmp.root', flatten=['x'])
+    assert('__array_index' in df_.columns)
+    assert(len(df_) == 6)
+    assert('length' in df_.columns.values)
+    assert('x' in df_.columns.values)
+    assert('y' not in df_.columns.values)
+    assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
+    assert(np.all(df_['x'] == np.array([0, 1, 2, 3, 4, 5])))
+
+
+    # flatten both array branches
+    df_ = read_root('tmp.root', flatten=['x','y'])
+    assert('__array_index' in df_.columns)
+    assert(len(df_) == 6)
+    assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
+    assert('length' in df_.columns.values)
+    assert('x' in df_.columns.values)
+    assert('y' in df_.columns.values)
+    assert(np.all(df_['x'] == np.array([0, 1, 2, 3, 4, 5])))
+    assert(np.all(df_['y'] == np.array([6, 7, 8, 9, 10, 11])))
+
+
+    # Also flatten chunked data
+    for df_ in read_root('tmp.root', flatten=['x'], chunksize=1):
+        assert(len(df_) == 3)
+        assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
+
+    # Also test deprecated behaviour
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_ = read_root('tmp.root', flatten=True)
     assert('__array_index' in df_.columns)
     assert(len(df_) == 6)
     assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
 
-    # Also flatten chunked data
-
-    for df_ in read_root('tmp.root', flatten=True, chunksize=1):
-        assert(len(df_) == 3)
-        assert(np.all(df_['__array_index'] == np.array([0, 1, 2])))
 
     os.remove('tmp.root')
+
+
+
 
 def test_drop_nonscalar_columns():
     array = np.array([1, 2, 3])
@@ -157,11 +193,12 @@ def test_drop_nonscalar_columns():
 
     path = 'tmp.root'
     array2root(arr, path, 'ntuple', mode='recreate')
-
-    df = read_root(path, flatten=False)
-    # the above line throws an error if flatten=True because nonscalar columns
-    # are dropped only after the flattening is applied. However, the flattening
-    # algorithm can not deal with arrays of more than one dimension.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = read_root(path, flatten=False)
+        # the above line throws an error if flatten=True because nonscalar columns
+        # are dropped only after the flattening is applied. However, the flattening
+        # algorithm can not deal with arrays of more than one dimension.
     assert(len(df.columns) == 2)
     assert(np.all(df.index.values == np.array([0, 1])))
     assert(np.all(df.a.values == np.array([3, 2])))
