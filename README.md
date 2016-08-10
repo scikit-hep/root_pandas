@@ -103,6 +103,6 @@ you will append more and more data to it on each run of your program.
 
 When reading a ROOT file, `root_pandas` will automatically add a pandas index
 to the DataFrame, which starts at 1 and counts up for each entry.
-When writing the a DataFrame to a ROOT file, it stores the DataFrame index in a `__index__` branch.
+When writing the DataFrame to a ROOT file, it stores the DataFrame index in a `__index__` branch.
 Currently, only single-dimensional indices are supported.
 
