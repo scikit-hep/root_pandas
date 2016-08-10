@@ -33,7 +33,7 @@ df = read_root('myfile.root', 'mykey')
 
 You can also directly read multiple ROOT files at once by passing a list of file names:
 ```python
-df = read_root(['file1.root', 'file2.root', 'mykey'])
+df = read_root(['file1.root', 'file2.root'], 'mykey')
 ```
 In this case, each file must have the same set of columns under the given key.
 
