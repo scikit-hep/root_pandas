@@ -5,7 +5,7 @@ A module that extends pandas to support the ROOT data format.
 
 import numpy as np
 from numpy.lib.recfunctions import append_fields
-from pandas import DataFrame
+from pandas import DataFrame, RangeIndex
 from root_numpy import root2array, list_trees
 from fnmatch import fnmatch
 from root_numpy import list_branches
@@ -199,11 +199,13 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         # XXX could explicitly clean up the opened TFiles with TChain::Reset
 
         def genchunks():
+            current_index = 0
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
                 if flatten:
                     arr = do_flatten(arr, flatten)
-                yield convert_to_dataframe(arr)
+                yield convert_to_dataframe(arr, start_index=current_index)
+                current_index += len(arr)
         return genchunks()
 
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
@@ -212,15 +214,17 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
     return convert_to_dataframe(arr)
 
 
-
-def convert_to_dataframe(array):
+def convert_to_dataframe(array, start_index=None):
     nonscalar_columns = get_nonscalar_columns(array)
     if nonscalar_columns:
         warnings.warn("Ignored the following non-scalar branches: {bad_names}"
                       .format(bad_names=", ".join(nonscalar_columns)), UserWarning)
     indices = list(filter(lambda x: x.startswith('__index__') and x not in nonscalar_columns, array.dtype.names))
     if len(indices) == 0:
-        df = DataFrame.from_records(array, exclude=nonscalar_columns)
+        index = None
+        if start_index is not None:
+            index = RangeIndex(start=start_index, stop=start_index + len(array))
+        df = DataFrame.from_records(array, exclude=nonscalar_columns, index=index)
     elif len(indices) == 1:
         # We store the index under the __index__* branch, where
         # * is the name of the index
@@ -235,7 +239,7 @@ def convert_to_dataframe(array):
     return df
 
 
-def to_root(df, path, key='default', mode='w', *args, **kwargs):
+def to_root(df, path, key='default', mode='w', store_index=True, *args, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
@@ -247,6 +251,9 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
         Name of tree that the DataFrame will be saved as
     mode: string, {'w', 'a'}
         Mode that the file should be opened in (default: 'w')
+    store_index: bool (optional, default: True)
+        Whether the index of the DataFrame should be stored as
+        an __index__* branch in the tree
 
     Notes
     -----
@@ -270,11 +277,12 @@ def to_root(df, path, key='default', mode='w', *args, **kwargs):
     from root_numpy import array2root
     # We don't want to modify the user's DataFrame here, so we make a shallow copy
     df_ = df.copy(deep=False)
-    name = df_.index.name
-    if name is None:
-        # Handle the case where the index has no name
-        name = ''
-    df_['__index__' + name] = df_.index
+    if store_index:
+        name = df_.index.name
+        if name is None:
+            # Handle the case where the index has no name
+            name = ''
+        df_['__index__' + name] = df_.index
     arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
 

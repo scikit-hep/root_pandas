@@ -82,6 +82,23 @@ def test_chunked_reading():
     assert count == 3
     os.remove('tmp.root')
 
+# Make sure that the default index counts up properly,
+# even if the input is chunked
+def test_chunked_reading_consistent_index():
+    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df.to_root('tmp.root', store_index=False)
+
+    dfs = []
+    for df_ in read_root('tmp.root', chunksize=2):
+        dfs.append(df_)
+        assert(not df_.empty)
+    df_reconstructed = pd.concat(dfs)
+
+    assert_frame_equal(df, df_reconstructed)
+
+    os.remove('tmp.root')
+
+
 def test_multiple_files():
     df = pd.DataFrame({'x': [1,2,3,4,5,6]})
     df.to_root('tmp1.root')
