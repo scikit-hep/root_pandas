@@ -52,6 +52,32 @@ def test_ignore_columns():
 
     os.remove('tmp.root')
 
+def test_array_element_columns():
+    tf = ROOT.TFile('tmp.root', 'RECREATE')
+    tt = ROOT.TTree("a", "a")
+
+    length = np.array([3])
+    x = np.array([0, 1, 2], dtype='float64')
+    tt.Branch('length', length, 'length/I')
+    tt.Branch('x', x, 'x[length]/D')
+    tt.Fill()
+    x[0] = 0
+    x[1] = 1
+    x[2] = 2
+    tt.Fill()
+    tf.Write()
+    tf.Close()
+
+    branches = list_branches('tmp.root')
+
+    df = read_root('tmp.root', columns="noexpand:x[0]")
+    assert df.columns == ['x[0]']
+    import pdb; pdb.set_trace()
+
+    for i in df['x[0]']:
+        assert i == 0
+
+    os.remove('tmp.root')
 
 def test_persistent_index():
     df = pd.DataFrame({'index': [42, 0, 1], 'x': [1,2,3]})

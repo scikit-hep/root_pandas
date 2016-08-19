@@ -4,7 +4,7 @@ A module that extends pandas to support the ROOT data format.
 """
 
 import numpy as np
-from numpy.lib.recfunctions import append_fields
+from numpy.lib.recfunctions import append_fields, drop_fields, rename_fields
 from pandas import DataFrame
 from root_numpy import root2array, list_trees
 from fnmatch import fnmatch
@@ -92,6 +92,22 @@ def filter_noexpand_columns(columns):
     other = [c for c in columns if not c.startswith(NOEXPAND_PREFIX)]
     return other, noexpand
 
+def filter_single_array_element_columns(columns):
+    """ Return columns that should be an element of an array
+
+    Parameters
+    ----------
+    columns: sequence of str
+      A sequence of strings to be split
+
+    Returns
+    -------
+      Two lists, the first containing strings that refer to scalar values, the
+      second containing those that should refer to an array element.
+    """
+    array_elements = [x for x in columns if re.match(r".*\[\d+\]$", x)]
+    other = [c for c in columns if c not in array_elements]
+    return other, array_elements
 
 def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
     """
@@ -211,9 +227,32 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         arr = do_flatten(arr, flatten)
     return convert_to_dataframe(arr)
 
+def get_first_or_NaN(iterable):
+    try:
+        return iterable[0]
+    except IndexError:
+        return np.NaN
+
+def convert_len_1_list_cols_to_scalar_cols(array):
+    """Converts columns of type [scalar] to type scalar."""
+    nonscalar_columns = get_nonscalar_columns(array)
+    _, single_element_columns = filter_single_array_element_columns(nonscalar_columns)
+
+    for col in single_element_columns:
+        tmp_col = "__"+col
+        new_column = np.vectorize(get_first_or_NaN)(array[col])
+        array = append_fields(array, tmp_col, data=new_column)
+        array = drop_fields(array, col)
+        array = rename_fields(array, {tmp_col: col})
+
+    return array
 
 
 def convert_to_dataframe(array):
+    # Sometimes noexpand: equations returns values in a len 1 array. The
+    # following converts it into a scalar column of some type and NaN
+    array = convert_len_1_list_cols_to_scalar_cols(array)
+
     nonscalar_columns = get_nonscalar_columns(array)
     if nonscalar_columns:
         warnings.warn("Ignored the following non-scalar branches: {bad_names}"
