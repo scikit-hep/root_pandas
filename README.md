@@ -76,6 +76,9 @@ If the `chunksize` parameter is specified, `read_root` returns an iterator that 
 for df in read_root('bigfile.root', chunksize=100000):
     # process df here
 ```
+If `bigfile.root` doesn't contain an index, the default indices of the
+individual `DataFrame` chunks will still increase continuously, as if they were
+parts of a single large `DataFrame`.
 
 You can also combine any of the above options at the same time.
 
