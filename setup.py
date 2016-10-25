@@ -9,7 +9,7 @@ setup(name='root_pandas',
       license='MIT',
       install_requires=[
           'numpy',
-          'pandas',
+          'pandas>=0.18.0',
           'root_numpy',
       ],
       packages=['root_pandas'],
