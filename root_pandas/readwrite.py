@@ -239,7 +239,7 @@ def convert_to_dataframe(array, start_index=None):
     return df
 
 
-def to_root(df, path, key='DecayTree', mode='w', store_index=True, *args, **kwargs):
+def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwargs):
     """
     Write DataFrame to a ROOT file.
 
