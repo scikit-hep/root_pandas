@@ -1,7 +1,7 @@
 
 # root\_pandas
 
-[![Build Status](https://travis-ci.org/ibab/root_pandas.svg?branch=master)](https://travis-ci.org/ibab/root_pandas) [![PyPI](https://img.shields.io/pypi/v/root_pandas.svg)](https://pypi.python.org/pypi/root_pandas/) [![DOI](https://zenodo.org/badge/17171/ibab/root_pandas.svg)](https://zenodo.org/badge/latestdoi/17171/ibab/root_pandas)
+[![Build Status](https://travis-ci.org/chrisburr/root_pandas.svg?branch=master)](https://travis-ci.org/chrisburr/root_pandas) [![PyPI](https://img.shields.io/pypi/v/root_pandas.svg)](https://pypi.python.org/pypi/root_pandas/) [![DOI](https://zenodo.org/badge/17171/ibab/root_pandas.svg)](https://zenodo.org/badge/latestdoi/17171/ibab/root_pandas)
 
 `root_pandas` is a convenience package built around the `root_numpy` library.
 It allows you to easily load and store pandas DataFrames using the columnar ROOT data format used in high energy physics.
@@ -47,7 +47,7 @@ You can also use `*` in the column names to read in any matching branch:
 df = read_root('myfile.root', columns=['variable*'])
 ```
 
-In addition, you can use shell brace patterns as in 
+In addition, you can use shell brace patterns as in
 ```python
 df = read_root('myfile.root', columns=['variable{1,2}'])
 ```
