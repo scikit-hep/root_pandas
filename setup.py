@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(name='root_pandas',
-      version='0.1.1',
+      version='0.2.0',
       description='Read and save DataFrames from and to ROOT files',
-      url='http://github.com/ibab/root_pandas',
-      author='Igor Babuschkin',
-      author_email='igor@babuschk.in',
+      url='http://github.com/chrisburr/root_pandas',
+      author='Chris Burr',
+      author_email='c.b@cern.ch',
       license='MIT',
       install_requires=[
           'numpy',
