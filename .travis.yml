@@ -32,7 +32,7 @@ install:
   - source activate testenv
   - pip install coverage coveralls
 
-script: nosetests
+script: nosetests --with-coverage --cover-package=root_pandas
 
 after_success:
     - time coveralls
