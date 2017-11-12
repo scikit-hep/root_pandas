@@ -20,6 +20,14 @@ These include
  - Selecting several columns at once using `*` globbing and `{A,B}` shell patterns.
  - Flattening source files containing arrays by storing one array element each in the DataFrame, duplicating any scalar variables.
 
+Python versions supported:
+
+[![](https://img.shields.io/badge/python-2.7-blue.svg)](https://badge.fury.io/py/root_pandas)
+[![](https://img.shields.io/badge/python-3.4-blue.svg)](https://badge.fury.io/py/root_pandas)
+[![](https://img.shields.io/badge/python-3.5-blue.svg)](https://badge.fury.io/py/root_pandas)
+[![](https://img.shields.io/badge/python-3.6-blue.svg)](https://badge.fury.io/py/root_pandas)
+
+
 ## Reading ROOT files
 
 This is how you can read the contents of a ROOT file into a DataFrame:
