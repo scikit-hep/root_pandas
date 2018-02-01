@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/scikit-hep/root_pandas.svg?branch=master)](https://travis-ci.org/scikit-hep/root_pandas)
 [![Coverage Status](https://coveralls.io/repos/github/scikit-hep/root_pandas/badge.svg?branch=master)](https://coveralls.io/github/scikit-hep/root_pandas?branch=master)
 [![PyPI](https://badge.fury.io/py/root_pandas.svg)](https://pypi.python.org/pypi/root_pandas/)
-[![DOI](https://zenodo.org/badge/17171/ibab/root_pandas.svg)](https://zenodo.org/badge/latestdoi/17171/ibab/root_pandas)
+[![DOI](https://zenodo.org/badge/17171/scikit-hep/root_pandas.svg)](https://zenodo.org/badge/latestdoi/17171/scikit-hep/root_pandas)
 
 `root_pandas` is a convenience package built around the `root_numpy` library.
 It allows you to easily load and store pandas DataFrames using the columnar ROOT data format used in high energy physics.
