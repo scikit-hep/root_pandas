@@ -59,6 +59,7 @@ def get_nonscalar_columns(array):
     bad_names = col_names[bad_cols]
     return list(bad_names)
 
+
 def get_matching_variables(branches, patterns, fail=True):
     selected = []
 
