@@ -1,36 +1,27 @@
-#sudo: false
-# travis-ci.org build & test configuration
 language: python
 
 matrix:
-    include:
-        - python: 2.7
-          env: PYTHON=2.7 ROOT=5.34.32
-        - python: 2.7
-          env: PYTHON=2.7 ROOT=6.04
-        - python: 3.4
-          env: PYTHON=3.4 ROOT=5.34.32
-        - python: 3.4
-          env: PYTHON=3.4 ROOT=6.04
-        - python: 3.5
-          env: PYTHON=3.4 ROOT=5.34.32
-        - python: 3.5
-          env: PYTHON=3.4 ROOT=6.04
-        - python: 3.6
-          env: PYTHON=3.4 ROOT=5.34.32
-        - python: 3.6
-          env: PYTHON=3.4 ROOT=6.04
-#install: source ci/install.sh
-install:
-  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then curl --silent http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -o miniconda.sh; fi
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then wget -nv http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi
+  include:
+    - python: 2.7
+      env: PYTHON=2.7 ROOT=5.34.32
+    - python: 2.7
+      env: PYTHON=2.7 ROOT=6.04
+    - python: 3.4
+      env: PYTHON=3.4 ROOT=5.34.32
+    - python: 3.4
+      env: PYTHON=3.4 ROOT=6.04
 
+install:
+  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then curl --silent http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh
+    -o miniconda.sh; fi
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then wget -nv http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    -O miniconda.sh; fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda info -a # Useful for debugging any issues with conda
+  - conda info -a
   - conda config --add channels http://conda.anaconda.org/NLeSC
   - conda config --set show_channel_urls yes
   - conda create -q -n testenv python=${PYTHON} root=${ROOT} rootpy pandas nose
@@ -41,7 +32,16 @@ install:
 script: nosetests --with-coverage --cover-package=root_pandas
 
 after_success:
-    - time coveralls
+  - time coveralls
 
 notifications:
-    email: false
+  email: false
+
+deploy:
+  provider: pypi
+  user: chrisburr
+  password:
+    secure: MyD2Q4zASzpXWaOBnbkGGm7luYB2SrrBVdX4faN0JmSmDcssn/exu2XDAIwhbZhg3uZC4bq7mBUpPiw/3Mx1f5kFgWlnjpnSRDaGhGLLc6rBp9Kqt6IOWcQ64yQ+S6LIuJ+tjbTMJAlNZgy3HDEwBWXKBvectWKJPZdVCenfMPA=
+  on:
+    tags: true
+    branch: master
