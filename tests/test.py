@@ -242,3 +242,18 @@ def test_noexpand_prefix():
     assert np.all(df['2*sqrt(x)'].values == 2*np.sqrt(xs))
 
     os.remove('tmp.root')
+
+
+def test_brace_pattern_in_columns():
+    reference_df = pd.DataFrame()
+    reference_df['var1'] = np.array([1, 2, 3])
+    reference_df['var2'] = np.array([4, 5, 6])
+    reference_df['var3'] = np.array([7, 8, 9])
+    reference_df.to_root('tmp.root')
+
+    df = read_root('tmp.root', columns=['var{1,2}'])
+    print(repr(df))
+    print(repr(reference_df))
+    assert df.equals(reference_df[['var1', 'var2']])
+
+    os.remove('tmp.root')
