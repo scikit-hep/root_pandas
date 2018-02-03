@@ -7,6 +7,7 @@ import numpy as np
 import ROOT
 import os
 import warnings
+from nose.tools import assert_raises
 
 
 def test_read_write():
@@ -249,11 +250,46 @@ def test_brace_pattern_in_columns():
     reference_df['var1'] = np.array([1, 2, 3])
     reference_df['var2'] = np.array([4, 5, 6])
     reference_df['var3'] = np.array([7, 8, 9])
+    reference_df['var{03}'] = np.array([10, 11, 12])
+    reference_df['var{04}'] = np.array([13, 14, 15])
+    reference_df['var{5}'] = np.array([16, 17, 18])
+    reference_df['var01'] = np.array([1.1, 2.1, 3.1])
+    reference_df['var02'] = np.array([4.1, 5.1, 6.1])
+    reference_df['var03'] = np.array([7.1, 8.1, 9.1])
+    reference_df['var11'] = np.array([10.1, 11.1, 12.1])
+    reference_df['var12'] = np.array([13.1, 14.1, 15.1])
+    reference_df['var13'] = np.array([16.1, 17.1, 18.1])
     reference_df.to_root('tmp.root')
 
+    # Try looking for a column that doesn't exist
+    with assert_raises(ValueError):
+        read_root('tmp.root', columns=['var{1,2,4}'])
+
+    # Simple expansion
     df = read_root('tmp.root', columns=['var{1,2}'])
-    print(repr(df))
-    print(repr(reference_df))
-    assert df.equals(reference_df[['var1', 'var2']])
+    assert set(df.columns) == {'var1', 'var2'}
+    assert_frame_equal(df[['var1', 'var2']], reference_df[['var1', 'var2']])
+
+    # Single expansion with braces in name
+    df = read_root('tmp.root', columns=['var{5}'])
+    assert set(df.columns) == {'var{5}'}
+    assert_frame_equal(df[['var{5}']], reference_df[['var{5}']])
+
+    # Single expansion with braces in name
+    df = read_root('tmp.root', columns=['var{03}'])
+    assert set(df.columns) == {'var{03}'}
+    assert_frame_equal(df[['var{03}']], reference_df[['var{03}']])
+
+    # Multiple expansions with braces in name
+    df = read_root('tmp.root', columns=[r'var{{03},2,{04}}'])
+    assert set(df.columns) == {'var{03}', 'var2', 'var{04}'}
+    assert_frame_equal(df[['var{03}', 'var2', 'var{04}']],
+                       reference_df[['var{03}', 'var2', 'var{04}']])
+
+    # # TODO Recursive expansions
+    # df = read_root('tmp.root', columns=[r'var{0{2,3},1{1,3}}'])
+    # assert set(df.columns) == {'var02', 'var03', 'var11', 'var13'}
+    # assert_frame_equal(df[['var02', 'var03', 'var11', 'var13']],
+    #                    reference_df[['var02', 'var03', 'var11', 'var13']])
 
     os.remove('tmp.root')

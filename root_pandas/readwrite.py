@@ -28,7 +28,7 @@ NOEXPAND_PREFIX = 'noexpand:'
 
 
 def expand_braces(orig):
-    r = r'.*(\{.+?[^\\]\})'
+    r = r'.*?(\{.+[^\\]\})'
     p = re.compile(r)
 
     s = orig[:]
@@ -40,12 +40,10 @@ def expand_braces(orig):
         open_brace = s.find(sub)
         close_brace = open_brace + len(sub) - 1
         if sub.find(',') != -1:
-            for pat in sub.strip('{}').split(','):
+            for pat in sub[1:-1].split(','):
                 res.extend(expand_braces(s[:open_brace] + pat + s[close_brace+1:]))
-
         else:
             res.extend(expand_braces(s[:open_brace] + sub.replace('}', '\\}') + s[close_brace+1:]))
-
     else:
         res.append(s.replace('\\}', '}'))
 
