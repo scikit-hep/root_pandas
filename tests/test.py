@@ -8,8 +8,9 @@ import ROOT
 import os
 import warnings
 
+
 def test_read_write():
-    df = pd.DataFrame({'x': [1,2,3]})
+    df = pd.DataFrame({'x': [1, 2, 3]})
     df.to_root('tmp.root')
     df_ = read_root('tmp.root')
     os.remove('tmp.root')
@@ -36,8 +37,9 @@ def test_read_write():
     df = read_root('tmp.root', columns=['x'])
     os.remove('tmp.root')
 
+
 def test_ignore_columns():
-    df = pd.DataFrame({'x': [1,2,3], 'y1': [2,3,4], 'y2': [3,4,5]})
+    df = pd.DataFrame({'x': [1, 2, 3],  'y1': [2, 3, 4],  'y2': [3, 4, 5]})
     df.to_root('tmp.root')
 
     df = read_root('tmp.root', ignore=['y1'])
@@ -54,7 +56,7 @@ def test_ignore_columns():
 
 
 def test_persistent_index():
-    df = pd.DataFrame({'index': [42, 0, 1], 'x': [1,2,3]})
+    df = pd.DataFrame({'index': [42, 0, 1], 'x': [1, 2, 3]})
     df = df.set_index('index')
     df.index.name = 'MyAwesomeName'
     df.to_root('tmp.root')
@@ -64,14 +66,15 @@ def test_persistent_index():
     os.remove('tmp.root')
 
     # See what happens if the index has no name
-    df = pd.DataFrame({'x': [1,2,3]})
+    df = pd.DataFrame({'x': [1, 2, 3]})
     df.to_root('tmp.root')
     df_ = read_root('tmp.root')
-    assert_frame_equal(df, df_)
+    assert_frame_equal(df,  df_)
     os.remove('tmp.root')
 
+
 def test_chunked_reading():
-    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df = pd.DataFrame({'x': [1, 2, 3, 4, 5, 6]})
     df.to_root('tmp.root')
 
     count = 0
@@ -82,10 +85,11 @@ def test_chunked_reading():
     assert count == 3
     os.remove('tmp.root')
 
+
 # Make sure that the default index counts up properly,
 # even if the input is chunked
 def test_chunked_reading_consistent_index():
-    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df = pd.DataFrame({'x': [1, 2, 3, 4, 5, 6]})
     df.to_root('tmp.root', store_index=False)
 
     dfs = []
@@ -100,7 +104,7 @@ def test_chunked_reading_consistent_index():
 
 
 def test_multiple_files():
-    df = pd.DataFrame({'x': [1,2,3,4,5,6]})
+    df = pd.DataFrame({'x': [1, 2, 3, 4, 5, 6]})
     df.to_root('tmp1.root')
     df.to_root('tmp2.root')
     df.to_root('tmp3.root')
@@ -140,12 +144,12 @@ def test_flatten():
     y[1] = 10
     y[2] = 11
     tt.Fill()
-    
+
     tf.Write()
     tf.Close()
 
     branches = list_branches('tmp.root')
-
+    assert(set(branches) == {'length', 'x', 'y'})
 
     # flatten one out of two array branches
     with warnings.catch_warnings():
@@ -159,9 +163,8 @@ def test_flatten():
     assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
     assert(np.all(df_['x'] == np.array([0, 1, 2, 3, 4, 5])))
 
-
     # flatten both array branches
-    df_ = read_root('tmp.root', flatten=['x','y'])
+    df_ = read_root('tmp.root', flatten=['x', 'y'])
     assert('__array_index' in df_.columns)
     assert(len(df_) == 6)
     assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
@@ -170,7 +173,6 @@ def test_flatten():
     assert('y' in df_.columns.values)
     assert(np.all(df_['x'] == np.array([0, 1, 2, 3, 4, 5])))
     assert(np.all(df_['y'] == np.array([6, 7, 8, 9, 10, 11])))
-
 
     # Also flatten chunked data
     for df_ in read_root('tmp.root', flatten=['x'], chunksize=1):
@@ -185,10 +187,7 @@ def test_flatten():
     assert(len(df_) == 6)
     assert(np.all(df_['__array_index'] == np.array([0, 1, 2, 0, 1, 2])))
 
-
     os.remove('tmp.root')
-
-
 
 
 def test_drop_nonscalar_columns():
@@ -222,6 +221,7 @@ def test_drop_nonscalar_columns():
     assert(np.all(df.d.values == np.array([True, False])))
 
     os.remove(path)
+
 
 def test_noexpand_prefix():
     xs = np.array([1, 2, 3])
