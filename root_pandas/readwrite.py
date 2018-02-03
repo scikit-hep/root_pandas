@@ -92,6 +92,30 @@ def filter_noexpand_columns(columns):
     return other, noexpand
 
 
+def do_flatten(arr, flatten):
+    if flatten is True:
+        warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
+                      "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
+        arr_, idx = stretch(arr, return_indices=True)
+    else:
+        nonscalar = get_nonscalar_columns(arr)
+        fields = [x for x in arr.dtype.names if (x not in nonscalar or x in flatten)]
+
+        for col in flatten:
+            if col in nonscalar:
+                pass
+            elif col in fields:
+                raise ValueError("Requested to flatten {col} but it has a scalar type"
+                                 .format(col=col))
+            else:
+                raise ValueError("Requested to flatten {col} but it wasn't loaded from the input file"
+                                 .format(col=col))
+
+        arr_, idx = stretch(arr, fields=fields, return_indices=True)
+    arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
+    return arr
+
+
 def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=None, flatten=False, *args, **kwargs):
     """
     Read a ROOT file, or list of ROOT files, into a pandas DataFrame.
@@ -174,22 +198,6 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         for var in ignored:
             all_vars.remove(var)
 
-    def do_flatten(arr, flatten):
-        if flatten is True:
-            warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
-                          "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
-            arr_, idx = stretch(arr, return_indices=True)
-        else:
-            nonscalar = get_nonscalar_columns(arr)
-            fields = [x for x in arr.dtype.names if (x not in nonscalar or x in flatten)]
-            will_drop = [x for x in arr.dtype.names if x not in fields]
-            if will_drop:
-                warnings.warn("Ignored the following non-scalar branches: {bad_names}"
-                      .format(bad_names=", ".join(will_drop)), UserWarning)
-            arr_, idx = stretch(arr, fields=fields, return_indices=True)
-        arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
-        return arr
-
     if chunksize:
         tchain = ROOT.TChain(key)
         for path in paths:
@@ -215,19 +223,26 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
 
 def convert_to_dataframe(array, start_index=None):
     nonscalar_columns = get_nonscalar_columns(array)
-    if nonscalar_columns:
-        warnings.warn("Ignored the following non-scalar branches: {bad_names}"
-                      .format(bad_names=", ".join(nonscalar_columns)), UserWarning)
-    indices = list(filter(lambda x: x.startswith('__index__') and x not in nonscalar_columns, array.dtype.names))
+
+    # Columns containing 2D arrays can't be loaded so convert them 1D arrays of arrays
+    reshaped_columns = {}
+    for col in nonscalar_columns:
+        if array[col].ndim >= 2:
+            reshaped = np.zeros(len(array[col]), dtype='O')
+            for i, row in enumerate(array[col]):
+                reshaped[i] = row
+            reshaped_columns[col] = reshaped
+
+    indices = list(filter(lambda x: x.startswith('__index__'), array.dtype.names))
     if len(indices) == 0:
         index = None
         if start_index is not None:
             index = RangeIndex(start=start_index, stop=start_index + len(array))
-        df = DataFrame.from_records(array, exclude=nonscalar_columns, index=index)
+        df = DataFrame.from_records(array, exclude=reshaped_columns, index=index)
     elif len(indices) == 1:
         # We store the index under the __index__* branch, where
         # * is the name of the index
-        df = DataFrame.from_records(array, index=indices[0], exclude=nonscalar_columns)
+        df = DataFrame.from_records(array, exclude=reshaped_columns, index=indices[0])
         index_name = indices[0][len('__index__'):]
         if not index_name:
             # None means the index has no name
@@ -235,6 +250,18 @@ def convert_to_dataframe(array, start_index=None):
         df.index.name = index_name
     else:
         raise ValueError("More than one index found in file")
+
+    # Manually the columns which were reshaped
+    for key, reshaped in reshaped_columns.items():
+        df[key] = reshaped
+
+    # Reshaping can cause the order of columns to change so we have to change it back
+    if reshaped_columns:
+        # Filter to remove __index__ columns
+        columns = [c for c in array.dtype.names if c in df.columns]
+        assert len(columns) == len(df.columns), (columns, df.columns)
+        df = df.reindex_axis(columns, axis=1, copy=False)
+
     return df
 
 

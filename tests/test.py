@@ -191,10 +191,17 @@ def test_flatten():
     os.remove('tmp.root')
 
 
-def test_drop_nonscalar_columns():
-    array = np.array([1, 2, 3])
-    matrix = np.array([[1, 2, 3], [4, 5, 6]])
-    bool_matrix = np.array([[True, False, True], [True, True, True]])
+def to_object_array(array):
+    new_array = np.zeros(len(array), dtype='O')
+    for i, row in enumerate(array):
+        new_array[i] = row
+    return new_array
+
+
+def test_nonscalar_columns():
+    array = np.array([1, 2, 3], dtype=np.int64)
+    matrix = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64)
+    bool_matrix = np.array([[True, False, True], [True, True, True]], dtype=np.bool_)
 
     dt = np.dtype([
         ('a', 'i4'),
@@ -208,18 +215,17 @@ def test_drop_nonscalar_columns():
         (2, array, matrix, False, bool_matrix)],
         dtype=dt)
 
+    reference_df = pd.DataFrame()
+    reference_df['a'] = np.array([3, 2], dtype=np.int32)
+    reference_df['b'] = to_object_array([array, array])
+    reference_df['c'] = to_object_array([matrix, matrix])
+    reference_df['d'] = np.array([True, False], dtype=np.bool_)
+    reference_df['e'] = to_object_array([bool_matrix, bool_matrix])
+
     path = 'tmp.root'
     array2root(arr, path, 'ntuple', mode='recreate')
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df = read_root(path, flatten=False)
-        # the above line throws an error if flatten=True because nonscalar columns
-        # are dropped only after the flattening is applied. However, the flattening
-        # algorithm can not deal with arrays of more than one dimension.
-    assert(len(df.columns) == 2)
-    assert(np.all(df.index.values == np.array([0, 1])))
-    assert(np.all(df.a.values == np.array([3, 2])))
-    assert(np.all(df.d.values == np.array([True, False])))
+    df = read_root(path, flatten=False)
+    assert_frame_equal(df, reference_df)
 
     os.remove(path)
 
