@@ -11,10 +11,11 @@ def get_version():
 
 setup(name='root_pandas',
       version=get_version(),
-      description='Read and save DataFrames from and to ROOT files',
-      url='http://github.com/chrisburr/root_pandas',
-      author='Chris Burr',
-      author_email='c.b@cern.ch',
+      description='Read and save pandas DataFrames from and to ROOT files',
+      url='http://github.com/scikit-hep/root_pandas',
+      author='the root_pandas developers',
+      maintainer='Chris Burr',
+      maintainer_email='c.b@cern.ch',
       license='MIT',
       install_requires=[
           'numpy',
