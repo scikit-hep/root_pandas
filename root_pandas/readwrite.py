@@ -61,10 +61,13 @@ def get_nonscalar_columns(array):
 def get_matching_variables(branches, patterns, fail=True):
     # Convert branches to a set to make x "in branches" O(1) on average
     branches = set(branches)
-    selected = []
-    for pattern in patterns:
+    patterns = set(patterns)
+    # Find any trivial matches
+    selected = list(branches.intersection(patterns))
+    # Any matches that weren't trivial need to be looped over...
+    for pattern in patterns.difference(selected):
         found = False
-        # Avoid using fnmatch if the pattern can only match literally
+        # Avoid using fnmatch if the pattern if possible
         if re.findall(r'(\*)|(\?)|(\[.*\])|(\[\!.*\])', pattern):
             for match in fnmatch.filter(branches, pattern):
                 found = True
