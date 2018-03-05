@@ -235,9 +235,9 @@ def test_get_matching_variables_performance():
     import random
     import string
     import root_pandas.readwrite
-    for n in [10, 100, 1000, 10000, 100000]:
-        branches = [' '.join(random.choices(string.ascii_letters, k=100)) for i in range(n)]
-        patterns = [' '.join(random.choices(string.ascii_letters, k=100)) for i in range(n)]
+    for n in [10, 100, 1000, 10000]:
+        branches = [' '.join(random.sample(string.ascii_letters*100, k=100)) for i in range(n)]
+        patterns = [' '.join(random.sample(string.ascii_letters*100, k=100)) for i in range(n)]
         root_pandas.readwrite.get_matching_variables(branches, patterns, fail=False)
         root_pandas.readwrite.get_matching_variables(branches, branches, fail=False)
 
