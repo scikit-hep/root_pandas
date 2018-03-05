@@ -74,9 +74,7 @@ def get_matching_variables(branches, patterns, fail=True):
                 if match not in selected:
                     selected.append(match)
         elif pattern in branches:
-            found = True
-            if pattern not in selected:
-                selected.append(pattern)
+            raise NotImplementedError('I think this is impossible?')
         if not found and fail:
             raise ValueError("Pattern '{}' didn't match any branch".format(pattern))
     return selected
