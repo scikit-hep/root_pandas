@@ -7,7 +7,7 @@ import numpy as np
 from numpy.lib.recfunctions import append_fields
 from pandas import DataFrame, RangeIndex
 from root_numpy import root2array, list_trees
-from fnmatch import fnmatch
+import fnmatch
 from root_numpy import list_branches
 from root_numpy.extern.six import string_types
 import itertools
@@ -59,17 +59,24 @@ def get_nonscalar_columns(array):
 
 
 def get_matching_variables(branches, patterns, fail=True):
-    selected = []
-
-    for p in patterns:
+    # Convert branches to a set to make x "in branches" O(1) on average
+    branches = set(branches)
+    patterns = set(patterns)
+    # Find any trivial matches
+    selected = list(branches.intersection(patterns))
+    # Any matches that weren't trivial need to be looped over...
+    for pattern in patterns.difference(selected):
         found = False
-        for b in branches:
-            if fnmatch(b, p):
+        # Avoid using fnmatch if the pattern if possible
+        if re.findall(r'(\*)|(\?)|(\[.*\])|(\[\!.*\])', pattern):
+            for match in fnmatch.filter(branches, pattern):
                 found = True
-            if fnmatch(b, p) and b not in selected:
-                selected.append(b)
+                if match not in selected:
+                    selected.append(match)
+        elif pattern in branches:
+            raise NotImplementedError('I think this is impossible?')
         if not found and fail:
-            raise ValueError("Pattern '{}' didn't match any branch".format(p))
+            raise ValueError("Pattern '{}' didn't match any branch".format(pattern))
     return selected
 
 
