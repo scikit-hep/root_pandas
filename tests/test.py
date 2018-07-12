@@ -304,10 +304,10 @@ def test_brace_pattern_in_columns():
     assert_frame_equal(df[['var{03}', 'var2', 'var{04}']],
                        reference_df[['var{03}', 'var2', 'var{04}']])
 
-    # # TODO Recursive expansions
-    # df = read_root('tmp.root', columns=[r'var{0{2,3},1{1,3}}'])
-    # assert set(df.columns) == {'var02', 'var03', 'var11', 'var13'}
-    # assert_frame_equal(df[['var02', 'var03', 'var11', 'var13']],
-    #                    reference_df[['var02', 'var03', 'var11', 'var13']])
+    # Recursive expansions
+    df = read_root('tmp.root', columns=[r'var{0{2,3},1{1,3}}'])
+    assert set(df.columns) == {'var02', 'var03', 'var11', 'var13'}
+    assert_frame_equal(df[['var02', 'var03', 'var11', 'var13']],
+                       reference_df[['var02', 'var03', 'var11', 'var13']])
 
     os.remove('tmp.root')
