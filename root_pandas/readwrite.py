@@ -81,6 +81,9 @@ def expand_braces(orig):
 
 
 def get_nonscalar_columns(array):
+    if len(array) == 0:
+        return []
+
     first_row = array[0]
     bad_cols = np.array([x.ndim != 0 for x in first_row])
     col_names = np.array(array.dtype.names)
