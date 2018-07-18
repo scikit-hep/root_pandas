@@ -249,6 +249,8 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             current_index = 0
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
+                if len(arr) == 0:
+                    continue
                 if flatten:
                     arr = do_flatten(arr, flatten)
                 yield convert_to_dataframe(arr, start_index=current_index)
