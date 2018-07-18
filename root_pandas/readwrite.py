@@ -81,6 +81,9 @@ def expand_braces(orig):
 
 
 def get_nonscalar_columns(array):
+    if len(array) == 0:
+        return []
+
     first_row = array[0]
     bad_cols = np.array([x.ndim != 0 for x in first_row])
     col_names = np.array(array.dtype.names)
@@ -246,6 +249,8 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
             current_index = 0
             for chunk in range(int(ceil(float(n_entries) / chunksize))):
                 arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
+                if len(arr) == 0:
+                    continue
                 if flatten:
                     arr = do_flatten(arr, flatten)
                 yield convert_to_dataframe(arr, start_index=current_index)
