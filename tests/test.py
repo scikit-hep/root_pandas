@@ -1,5 +1,5 @@
 import pandas as pd
-from root_pandas import read_root
+from root_pandas import read_root, to_root
 from root_numpy import list_branches
 from root_numpy import array2root
 from pandas.util.testing import assert_frame_equal
@@ -311,3 +311,13 @@ def test_brace_pattern_in_columns():
                        reference_df[['var02', 'var03', 'var11', 'var13']])
 
     os.remove('tmp.root')
+
+
+def test_detect_branches_first_missing():
+    df = pd.DataFrame({'a': list(range(10)), 'b': list(range(10))})
+    to_root(df, 'tmp_1.root', 'my_tree_1')
+    to_root(df, 'tmp_2.root', 'my_tree')
+    read_df = read_root(['tmp_1.root', 'tmp_2.root'], 'my_tree', warn_missing_tree=True)
+    assert_frame_equal(df, read_df)
+    os.remove('tmp_1.root')
+    os.remove('tmp_2.root')

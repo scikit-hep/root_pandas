@@ -199,11 +199,19 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
 
     if not isinstance(paths, list):
         paths = [paths]
-    # Use a single file to search for trees and branches
-    seed_path = paths[0]
+    # Use a single file to search for trees and branches, ensuring the key exists
+    for seed_path in paths:
+        trees = list_trees(seed_path)
+        if key and key not in trees:
+            continue
+        break
+    else:
+        if key:
+            raise OSError('{} not found in any of the given paths'.format(key))
+        else:
+            raise OSError('No trees found in any of the given paths')
 
     if not key:
-        trees = list_trees(seed_path)
         if len(trees) == 1:
             key = trees[0]
         elif len(trees) == 0:

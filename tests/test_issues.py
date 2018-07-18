@@ -4,6 +4,16 @@ import pandas as pd
 import root_pandas
 
 
+def test_issue_60():
+    df = pd.DataFrame({'a': list(range(10)), 'b': list(range(10))})
+    root_pandas.to_root(df, 'tmp_1.root', 'my_tree_1')
+    root_pandas.to_root(df, 'tmp_2.root', 'my_tree')
+    result = root_pandas.read_root(['tmp_1.root', 'tmp_2.root'], 'my_tree', warn_missing_tree=True)
+    assert len(result) == 10
+    os.remove('tmp_1.root')
+    os.remove('tmp_2.root')
+
+
 def test_issue_63():
     df = pd.DataFrame({'a': [], 'b': []})
     root_pandas.to_root(df, 'tmp_1.root', 'my_tree')
