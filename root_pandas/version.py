@@ -4,6 +4,6 @@ __all__ = [
     'version_info',
 ]
 
-__version__ = '0.3.5'
+__version__ = '0.4.0'
 version = __version__
 version_info = tuple(__version__.split('.'))
