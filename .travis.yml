@@ -24,9 +24,10 @@ install:
   - conda info -a
   - conda config --add channels http://conda.anaconda.org/NLeSC
   - conda config --set show_channel_urls yes
-  - conda create -q -n testenv python=${PYTHON} root=${ROOT} rootpy pandas nose
+  - conda create -q -n testenv python=${PYTHON} root=${ROOT} pandas nose
   - export CONDA_ENV_PATH=$HOME/miniconda/envs/testenv
   - source activate testenv
+  - pip install --user --no-binary=root_numpy root_numpy==4.4.1 rootpy
   - pip install coverage coveralls
 
 script: nosetests --with-coverage --cover-package=root_pandas

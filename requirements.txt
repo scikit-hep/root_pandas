@@ -1,2 +1,2 @@
 pandas
-root_numpy>=4.4.0
+root_numpy>=4.4.1
