@@ -363,7 +363,8 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
 
     # Convert categorical columns into something root_numpy can serialise
     for col in df.select_dtypes(['category']).columns:
-        name_components = ['__rpCaT', col, str(df[col].cat.ordered)] + df[col].cat.categories
+        name_components = ['__rpCaT', col, str(df[col].cat.ordered)]
+        name_components.extend(df[col].cat.categories)
         if ['*' not in c for c in name_components]:
             sep = '*'
         else:
