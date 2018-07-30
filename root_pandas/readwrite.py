@@ -315,11 +315,12 @@ def convert_to_dataframe(array, start_index=None):
 
     # Convert categorical columns back to categories
     for c in df.columns:
-        match = re.match(r'__rpCaT\*([^\*]\*(True|False)\*)', c)
+        match = re.match(r'^__rpCaT\*([^\*]+\*(True|False)\*)', c)
         if match:
             real_name, ordered = match.groups
             categories = c.split('*')[3:]
             df[c] = pd.Categorical.from_codes(df[c], categories, ordered={'True': True, 'False': False}[ordered])
+            df.rename(index=str, columns={c: real_name}, inplace=True)
 
     return df
 
@@ -378,8 +379,8 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
             sep = '*'
         else:
             raise ValueError('Unable to find suitable separator for columns')
-        df_[sep.join(name_components)] = df_[col].cat.codes
-        del df_[col]
+        df_[col] = df_[col].cat.codes
+        df.rename(index=str, columns={col: sep.join(name_components)}, inplace=True)
 
     arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
