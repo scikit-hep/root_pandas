@@ -353,12 +353,24 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
     from root_numpy import array2root
     # We don't want to modify the user's DataFrame here, so we make a shallow copy
     df_ = df.copy(deep=False)
+
     if store_index:
         name = df_.index.name
         if name is None:
             # Handle the case where the index has no name
             name = ''
         df_['__index__' + name] = df_.index
+
+    # Convert categorical columns into something root_numpy can serialise
+    for col in df.select_dtypes(['category']).columns:
+        name_components = ['__rpCaT', col, str(df[col].cat.ordered)] + df[col].cat.categories
+        if ['*' not in c for c in name_components]:
+            sep = '*'
+        else:
+            raise ValueError('Unable to find suitable separator for columns')
+        df_[sep.join(name_components)] = df[col].cat.codes
+        del df[col]
+
     arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
 
