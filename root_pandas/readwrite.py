@@ -6,6 +6,7 @@ A module that extends pandas to support the ROOT data format.
 import numpy as np
 from numpy.lib.recfunctions import append_fields
 from pandas import DataFrame, RangeIndex
+import pandas as pd
 from root_numpy import root2array, list_trees
 import fnmatch
 from root_numpy import list_branches
@@ -311,6 +312,14 @@ def convert_to_dataframe(array, start_index=None):
         columns = [c for c in array.dtype.names if c in df.columns]
         assert len(columns) == len(df.columns), (columns, df.columns)
         df = df.reindex_axis(columns, axis=1, copy=False)
+
+    # Convert categorical columns back to categories
+    for c in df.columns:
+        match = re.match(r'__rpCaT\*([^\*]\*(True|False)\*)', c)
+        if match:
+            real_name, ordered = match.groups
+            categories = c.split('*')[3:]
+            df[c] = pd.Categorical.from_codes(df[c], categories, ordered={'True': True, 'False': False}[ordered])
 
     return df
 
