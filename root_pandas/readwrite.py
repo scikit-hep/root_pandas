@@ -371,15 +371,15 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         df_['__index__' + name] = df_.index
 
     # Convert categorical columns into something root_numpy can serialise
-    for col in df.select_dtypes(['category']).columns:
-        name_components = ['__rpCaT', col, str(df[col].cat.ordered)]
-        name_components.extend(df[col].cat.categories)
+    for col in df_.select_dtypes(['category']).columns:
+        name_components = ['__rpCaT', col, str(df_[col].cat.ordered)]
+        name_components.extend(df_[col].cat.categories)
         if ['*' not in c for c in name_components]:
             sep = '*'
         else:
             raise ValueError('Unable to find suitable separator for columns')
-        df_[sep.join(name_components)] = df[col].cat.codes
-        del df[col]
+        df_[sep.join(name_components)] = df_[col].cat.codes
+        del df_[col]
 
     arr = df_.to_records(index=False)
     array2root(arr, path, key, mode=mode, *args, **kwargs)
