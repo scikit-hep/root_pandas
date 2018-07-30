@@ -315,7 +315,7 @@ def convert_to_dataframe(array, start_index=None):
 
     # Convert categorical columns back to categories
     for c in df.columns:
-        match = re.match(r'^__rpCaT\*([^\*]+\*(True|False)\*)', c)
+        match = re.match(r'^__rpCaT\*([^\*]+)\*(True|False)\*', c)
         if match:
             real_name, ordered = match.groups()
             categories = c.split('*')[3:]
