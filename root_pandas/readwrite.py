@@ -360,7 +360,7 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
     else:
         raise ValueError('Unknown mode: {}. Must be "a" or "w".'.format(mode))
 
-    from root_numpy import array2root
+    from root_numpy import array2tree
     # We don't want to modify the user's DataFrame here, so we make a shallow copy
     df_ = df.copy(deep=False)
 
@@ -383,7 +383,32 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         df_.rename(index=str, columns={col: sep.join(name_components)}, inplace=True)
 
     arr = df_.to_records(index=False)
-    array2root(arr, path, key, mode=mode, *args, **kwargs)
+
+    root_file = ROOT.TFile.Open(path, mode)
+    if not root_file:
+        raise IOError("cannot open file {0}".format(path))
+    if not root_file.IsWritable():
+        raise IOError("file {0} is not writable".format(path))
+
+    # Navigate to the requested directory
+    open_dirs = [root_file]
+    for dir_name in key.split('/')[:-1]:
+        current_dir = open_dirs[-1].Get(dir_name)
+        if not current_dir:
+            current_dir = open_dirs[-1].mkdir(dir_name)
+        current_dir.cd()
+        open_dirs.append(current_dir)
+
+    # The key is now just the top component
+    key = key.split('/')[-1]
+
+    # If a tree with that name exists, we want to update it
+    tree = open_dirs[-1].Get(key)
+    if not tree:
+        tree = None
+    tree = array2tree(arr, name=key, tree=tree)
+    tree.Write(key, ROOT.TFile.kOverwrite)
+    root_file.Close()
 
 
 # Patch pandas DataFrame to support to_root method
