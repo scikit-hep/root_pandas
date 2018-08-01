@@ -389,6 +389,15 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         raise IOError("cannot open file {0}".format(path))
     if not rfile.IsWritable():
         raise IOError("file {0} is not writable".format(path))
+
+    # Navigate to the requested directory
+    for d_name in key.split('/')[:-1]:
+        rfile = rfile.mkdir(d_name)
+        rfile.cd()
+
+    # The key is now just the top component
+    key = key.split('/')[-1]
+
     # If a tree with that name exists, we want to update it
     existing_tree = rfile.Get(key)
     tree = array2tree(arr, name=key, tree=existing_tree)
