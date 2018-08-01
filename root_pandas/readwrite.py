@@ -384,20 +384,20 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
 
     arr = df_.to_records(index=False)
 
-    rfile = ROOT.TFile.Open(path, mode)
-    if not rfile:
+    root_file = ROOT.TFile.Open(path, mode)
+    if not root_file:
         raise IOError("cannot open file {0}".format(path))
-    if not rfile.IsWritable():
+    if not root_file.IsWritable():
         raise IOError("file {0} is not writable".format(path))
 
     # Navigate to the requested directory
-    open_dirs = [rfile]
-    for d_name in key.split('/')[:-1]:
-        d = open_dirs[-1].Get(d_name)
-        if not d:
-            d = open_dirs[-1].mkdir(d_name)
-        d.cd()
-        open_dirs.append(d)
+    open_dirs = [root_file]
+    for dir_name in key.split('/')[:-1]:
+        current_dir = open_dirs[-1].Get(dir_name)
+        if not current_dir:
+            current_dir = open_dirs[-1].mkdir(dir_name)
+        current_dir.cd()
+        open_dirs.append(current_dir)
 
     # The key is now just the top component
     key = key.split('/')[-1]
@@ -408,7 +408,7 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         tree = None
     tree = array2tree(arr, name=key, tree=tree)
     tree.Write(key, ROOT.TFile.kOverwrite)
-    rfile.Close()
+    root_file.Close()
 
 
 # Patch pandas DataFrame to support to_root method
