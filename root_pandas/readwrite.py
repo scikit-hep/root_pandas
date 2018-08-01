@@ -360,7 +360,7 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
     else:
         raise ValueError('Unknown mode: {}. Must be "a" or "w".'.format(mode))
 
-    from root_numpy import array2root
+    from root_numpy import array2tree
     # We don't want to modify the user's DataFrame here, so we make a shallow copy
     df_ = df.copy(deep=False)
 
@@ -383,7 +383,17 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         df_.rename(index=str, columns={col: sep.join(name_components)}, inplace=True)
 
     arr = df_.to_records(index=False)
-    array2root(arr, path, key, mode=mode, *args, **kwargs)
+
+    rfile = ROOT.TFile.Open(path, mode)
+    if not rfile:
+        raise IOError("cannot open file {0}".format(path))
+    if not rfile.IsWritable():
+        raise IOError("file {0} is not writable".format(path))
+    # If a tree with that name exists, we want to update it
+    existing_tree = rfile.Get(key)
+    tree = array2tree(arr, name=key, tree=existing_tree)
+    tree.Write(key, ROOT.kOverwrite)
+    rfile.Close()
 
 
 # Patch pandas DataFrame to support to_root method
