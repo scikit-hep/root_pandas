@@ -73,7 +73,7 @@ df = read_root('myfile.root', columns=['noexpand:sqrt(variable1)']
 Working with stored arrays can be a bit inconventient in pandas.
 `root_pandas` makes it easy to flatten your input data, providing you with a DataFrame containing only scalars:
 ```python
-df = read_root('myfile.root', columns=['arrayvariable', 'othervariable'], flatten=True)
+df = read_root('myfile.root', columns=['arrayvariable', 'othervariable'], flatten=['arrayvariable'])
 ```
 
 Assuming the ROOT file contains the array `[1, 2, 3]` in the first `arrayvariable` column, flattening
