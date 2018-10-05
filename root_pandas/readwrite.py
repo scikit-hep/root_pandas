@@ -133,7 +133,7 @@ def filter_noexpand_columns(columns):
     return other, noexpand
 
 
-def do_flatten(arr, flatten):
+def do_flatten(arr, flatten, drop_nonflat=True):
     if flatten is True:
         warnings.warn(" The option flatten=True is deprecated. Please specify the branches you would like "
                       "to flatten in a list: flatten=['foo', 'bar']", FutureWarning)
@@ -141,6 +141,12 @@ def do_flatten(arr, flatten):
     else:
         nonscalar = get_nonscalar_columns(arr)
         fields = [x for x in arr.dtype.names if (x not in nonscalar or x in flatten)]
+        if not drop_nonflat:
+            print("filling keep")
+            keep_structured = [x for x in nonscalar if x not in fields]
+        else:
+            print("skipping keep")
+            keep_structured = []
 
         for col in flatten:
             if col in nonscalar:
@@ -152,7 +158,7 @@ def do_flatten(arr, flatten):
                 raise ValueError("Requested to flatten {col} but it wasn't loaded from the input file"
                                  .format(col=col))
 
-        arr_, idx = stretch(arr, fields=fields, return_indices=True)
+        arr_, idx = stretch(arr, fields=fields, return_indices=True, keep_structured=keep_structured)
     arr = append_fields(arr_, '__array_index', idx, usemask=False, asrecarray=True)
     return arr
 
@@ -261,14 +267,16 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
                 if len(arr) == 0:
                     continue
                 if flatten:
-                    arr = do_flatten(arr, flatten)
+                    arr = do_flatten(arr, flatten, (not columns))
                 yield convert_to_dataframe(arr, start_index=current_index)
                 current_index += len(arr)
         return genchunks()
 
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
+    print("arr type is {}".format(type(arr)))
     if flatten:
-        arr = do_flatten(arr, flatten)
+        arr = do_flatten(arr, flatten, (not columns))
+    print("arr type is {}".format(type(arr)))
     return convert_to_dataframe(arr)
 
 

@@ -25,7 +25,7 @@ import numpy as np
 VLEN = np.vectorize(len)
 
 
-def stretch(arr, fields=None, return_indices=False):
+def stretch(arr, fields=None, return_indices=False, keep_structured=[]):
     """Stretch an array.
     Stretch an array by ``hstack()``-ing  multiple array fields while
     preserving column names and record array structure. If a scalar field is
@@ -62,6 +62,8 @@ def stretch(arr, fields=None, return_indices=False):
     if fields is None:
         fields = arr.dtype.names
 
+    print("got called with keep: {}".format(keep_structured))
+
     # Construct dtype and check consistency
     for field in fields:
         dt = arr.dtype[field]
@@ -85,6 +87,14 @@ def stretch(arr, fields=None, return_indices=False):
             # Scalar field
             dtype.append((field, dt))
 
+    for field in keep_structured:
+        if field not in arr.dtype.names:
+            print("WTF? {}".format(field))
+        else:
+            print("worked: {}".format(field))
+            dt = arr.dtype[field]
+            dtype.append((field, dt))
+
     if len_array is None:
         raise RuntimeError("no array column in input")
 
@@ -101,6 +111,10 @@ def stretch(arr, fields=None, return_indices=False):
         else:
             # Scalar field
             ret[field] = np.repeat(arr[field], len_array)
+
+    for field in keep_structured:
+        dt = arr.dtype[field]
+        ret[field] = np.repeat(arr[field], len_array)
 
     if return_indices:
         idx = np.concatenate(list(map(np.arange, len_array)))
