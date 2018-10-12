@@ -78,6 +78,27 @@ def _getgroup(string, depth):
 
 
 def expand_braces(orig):
+    """run shell like brace expansion "foo{1,5,bar}" -> ["foo1","foo5","foobar"]
+
+    Parameters
+    ----------
+    orig: str or tuple with first element a string
+      The string will be brace expanded
+
+    Returns
+    -------
+      A list.
+
+      If orig is a string, then a list of the expanded strings. The list
+      contains only orig if no braces are in orig.
+
+      If orig is a tuple, then a list of tuples, where the first elements of
+      the tuples are the expanded strings and all other tuple element are
+      copies of the remaining elements of orig.
+    """
+    if isinstance(orig, tuple):
+        retval = _getitem(orig[0], 0)[0]
+        return [(expr,)+orig[1:] for expr in retval]
     return _getitem(orig, 0)[0]
 
 
@@ -95,17 +116,44 @@ def get_nonscalar_columns(array):
 def get_matching_variables(branches, patterns, fail=True):
     # Convert branches to a set to make x "in branches" O(1) on average
     branches = set(branches)
-    patterns = set(patterns)
-    # Find any trivial matches
-    selected = list(branches.intersection(patterns))
+
+    selected = []
+    formatching = []
+    for p in patterns:
+        if isinstance(p, tuple):
+            if p[0] in branches:
+                selected.append(p)
+            else:
+                formatching.append(p)
+        else:
+            if p in branches:
+                selected.append(p)
+            else:
+                formatching.append(p)
+
     # Any matches that weren't trivial need to be looped over...
-    for pattern in patterns.difference(selected):
+    for p in formatching:
+        if isinstance(p, tuple):
+            pattern = p[0]
+        else:
+            pattern = p
         found = False
         # Avoid using fnmatch if the pattern if possible
         if re.findall(r'(\*)|(\?)|(\[.*\])|(\[\!.*\])', pattern):
             for match in fnmatch.filter(branches, pattern):
                 found = True
+                if isinstance(p, tuple):
+                    match = (match,) + p[1:]
                 if match not in selected:
+                    # REVIEW ME: this can lead to situations where branches
+                    # get requested from root_numpy like this:
+                    #
+                    #    branches=["jet_E", ("jet_E",-999), ("jet_E",-99,55)]
+                    #
+                    # not because the user requested it like that, but because
+                    # after pattern matching and brace expansion it turned out
+                    # like this. For now, I leave it to root_numpy, to decide
+                    # what to do with this.
                     selected.append(match)
         elif pattern in branches:
             raise NotImplementedError('I think this is impossible?')
@@ -128,8 +176,19 @@ def filter_noexpand_columns(columns):
       second containing those that do with the prefix filtered out.
     """
     prefix_len = len(NOEXPAND_PREFIX)
-    noexpand = [c[prefix_len:] for c in columns if c.startswith(NOEXPAND_PREFIX)]
-    other = [c for c in columns if not c.startswith(NOEXPAND_PREFIX)]
+    noexpand = []
+    other = []
+    for c in columns:
+        if isinstance(c, tuple):
+            if c[0].startswith(NOEXPAND_PREFIX):
+                noexpand.append((c[0][prefix_len:],) + c[1:])
+            else:
+                other.append(c)
+        else:
+            if c.startswith(NOEXPAND_PREFIX):
+                noexpand.append(c[prefix_len:])
+            else:
+                other.append(c)
     return other, noexpand
 
 
