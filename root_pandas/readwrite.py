@@ -114,6 +114,32 @@ def get_nonscalar_columns(array):
 
 
 def get_matching_variables(branches, patterns, fail=True):
+    """Obtain a of branches that match at least one of the patterns.
+
+    Requested patterns can be strings or tuples with first element a string.
+    If a pattern is a tuple, then the matching branch names will be converted
+    into tuples, with the branch name as first element, and the remaining tuple
+    elements (i.e. default values and array size) are copied from the original
+    pattern into all tuples.
+
+    Parameters
+    ----------
+    branches: list of strings with the branch names in an input tree
+
+    patterns: list of strings and tuples with string as first element,
+      containing the to-be-matched patterns.
+
+    fail: bool. Whether or not patterns that don't match any branch should be
+      ignored.
+
+    Returns
+    -------
+    list of strings and tuples with strings as first element.
+
+    Raises
+    ------
+    ValueError: If a pattern doesn't match any branch and fail is True.
+    """
     # Convert branches to a set to make x "in branches" O(1) on average
     branches = set(branches)
 
