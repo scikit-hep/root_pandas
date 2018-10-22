@@ -252,19 +252,25 @@ def read_root(paths, key=None, columns=None, ignore=None, chunksize=None, where=
         for path in paths:
             tchain.Add(path)
         n_entries = tchain.GetEntries()
+        n_chunks = int(ceil(float(n_entries) / chunksize))
         # XXX could explicitly clean up the opened TFiles with TChain::Reset
 
-        def genchunks():
-            current_index = 0
-            for chunk in range(int(ceil(float(n_entries) / chunksize))):
-                arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
-                if len(arr) == 0:
-                    continue
-                if flatten:
-                    arr = do_flatten(arr, flatten)
-                yield convert_to_dataframe(arr, start_index=current_index)
-                current_index += len(arr)
-        return genchunks()
+        class genchunk(object):
+            def __len__(self):
+                return n_chunks
+
+            def __iter__(self):
+                current_index = 0
+                for chunk in range(n_chunks):
+                    arr = root2array(paths, key, all_vars, start=chunk * chunksize, stop=(chunk+1) * chunksize, selection=where, *args, **kwargs)
+                    if len(arr) == 0:
+                        continue
+                    if flatten:
+                        arr = do_flatten(arr, flatten)
+                    yield convert_to_dataframe(arr, start_index=current_index)
+                    current_index += len(arr)
+
+        return genchunk()
 
     arr = root2array(paths, key, all_vars, selection=where, *args, **kwargs)
     if flatten:
