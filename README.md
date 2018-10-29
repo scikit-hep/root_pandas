@@ -93,6 +93,19 @@ parts of a single large `DataFrame`.
 
 You can also combine any of the above options at the same time.
 
+Reading in chunks also supports progress bars
+```python
+from progressbar import ProgressBar
+pbar = ProgressBar()
+for df in pbar(read_root('bigfile.root', chunksize=100000)):
+    # process df here
+
+# or
+from tqdm import tqdm
+for df in tqdm(read_root('bigfile.root', chunksize=100000), unit="chunks"):
+    # process df here
+```
+
 ## Writing ROOT files
 
 `root_pandas` patches the pandas DataFrame to have a `to_root` method that allows you to save it into a ROOT file:
