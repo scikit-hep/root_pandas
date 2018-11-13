@@ -23,7 +23,7 @@ install:
   - conda create -q -n testenv python=${PYTHON} root pandas nose
   - export CONDA_ENV_PATH=$HOME/miniconda/envs/testenv
   - source activate testenv
-  - pip install --user --no-binary=root_numpy root_numpy==4.4.1 rootpy
+  - pip install --no-binary=root_numpy root_numpy rootpy
   - pip install coverage coveralls
 
 script: nosetests --with-coverage --cover-package=root_pandas
