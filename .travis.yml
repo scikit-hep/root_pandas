@@ -22,7 +22,7 @@ install:
   - source activate testenv
   - if [ "${PYTHON}" == "3.7" ]; then
       pip install git+https://github.com/scikit-hep/root_numpy.git;
-    else;
+    else
       pip install root_numpy;
     fi
   - pip install root_numpy rootpy
