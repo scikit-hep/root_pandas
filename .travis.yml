@@ -2,12 +2,9 @@ language: python
 
 matrix:
   include:
-    - python: 3.6
-      env: PYTHON=2.7
-    - python: 3.6
-      env: PYTHON=3.6
-    - python: 3.6
-      env: PYTHON=3.7
+    - env: PYTHON=2.7
+    - env: PYTHON=3.6
+    - env: PYTHON=3.7
 
 install:
   - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then curl --silent http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh
@@ -23,7 +20,7 @@ install:
   - conda create -q -n testenv python=${PYTHON} nomkl root pandas nose
   - export CONDA_ENV_PATH=$HOME/miniconda/envs/testenv
   - source activate testenv
-  - pip install --no-binary=root_numpy root_numpy rootpy
+  - pip install root_numpy rootpy
   - pip install coverage coveralls
 
 script: nosetests --with-coverage --cover-package=root_pandas
