@@ -20,7 +20,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda config --add channels conda-forge/label/gcc7
   - conda config --add channels chrisburr
-  - conda create -q -n testenv python=${PYTHON} root pandas nose
+  - conda create -q -n testenv python=${PYTHON} nomkl root pandas nose
   - export CONDA_ENV_PATH=$HOME/miniconda/envs/testenv
   - source activate testenv
   - pip install --no-binary=root_numpy root_numpy rootpy
