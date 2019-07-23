@@ -24,3 +24,20 @@ def test_issue_63():
     assert all(len(df) == 1 for df in result)
     os.remove('tmp_1.root')
     os.remove('tmp_2.root')
+
+
+def test_issue_80():
+    df = pd.DataFrame({'a': [1, 2], 'b': [4, 5]})
+    df.columns = ['a', 'a']
+    try:
+        root_pandas.to_root(df, '/tmp/example.root')
+    except ValueError as e:
+        assert 'DataFrame contains duplicated column names' in e.args[0]
+    else:
+        raise Exception('ValueError is expected')
+
+
+def test_issue_82():
+    variables = ['MET_px', 'MET_py', 'EventWeight']
+    df = root_pandas.read_root('http://scikit-hep.org/uproot/examples/HZZ.root', 'events', columns=variables)
+    assert list(df.columns) == variables

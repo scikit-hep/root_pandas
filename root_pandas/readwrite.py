@@ -2,6 +2,7 @@
 """
 A module that extends pandas to support the ROOT data format.
 """
+from collections import Counter
 
 import numpy as np
 from numpy.lib.recfunctions import append_fields
@@ -95,11 +96,11 @@ def get_nonscalar_columns(array):
 def get_matching_variables(branches, patterns, fail=True):
     # Convert branches to a set to make x "in branches" O(1) on average
     branches = set(branches)
-    patterns = set(patterns)
     # Find any trivial matches
-    selected = list(branches.intersection(patterns))
+    selected = sorted(branches.intersection(patterns),
+                      key=lambda s: patterns.index(s))
     # Any matches that weren't trivial need to be looped over...
-    for pattern in patterns.difference(selected):
+    for pattern in set(patterns).difference(selected):
         found = False
         # Avoid using fnmatch if the pattern if possible
         if re.findall(r'(\*)|(\?)|(\[.*\])|(\[\!.*\])', pattern):
@@ -317,7 +318,7 @@ def convert_to_dataframe(array, start_index=None):
         # Filter to remove __index__ columns
         columns = [c for c in array.dtype.names if c in df.columns]
         assert len(columns) == len(df.columns), (columns, df.columns)
-        df = df.reindex_axis(columns, axis=1, copy=False)
+        df = df.reindex(columns, axis=1, copy=False)
 
     # Convert categorical columns back to categories
     for c in df.columns:
@@ -365,6 +366,11 @@ def to_root(df, path, key='my_ttree', mode='w', store_index=True, *args, **kwarg
         mode = 'recreate'
     else:
         raise ValueError('Unknown mode: {}. Must be "a" or "w".'.format(mode))
+
+    column_name_counts = Counter(df.columns)
+    if max(column_name_counts.values()) > 1:
+        raise ValueError('DataFrame contains duplicated column names: ' +
+                         ' '.join({k for k, v in column_name_counts.items() if v > 1}))
 
     from root_numpy import array2tree
     # We don't want to modify the user's DataFrame here, so we make a shallow copy
