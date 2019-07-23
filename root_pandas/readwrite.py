@@ -317,7 +317,7 @@ def convert_to_dataframe(array, start_index=None):
         # Filter to remove __index__ columns
         columns = [c for c in array.dtype.names if c in df.columns]
         assert len(columns) == len(df.columns), (columns, df.columns)
-        df = df.reindex_axis(columns, axis=1, copy=False)
+        df = df.reindex(columns, axis=1, copy=False)
 
     # Convert categorical columns back to categories
     for c in df.columns:
