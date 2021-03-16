@@ -1,3 +1,10 @@
+# :warning:root_pandas is deprecated and unmaintained:warning:
+
+`root_pandas` is built upon `root_numpy` which [has not been actively maintained in several years](https://github.com/scikit-hep/root_numpy#warningroot_numpy-is-deprecated-and-unmaintainedwarning). This is mostly due to the emergence of new alternatives which are both faster and more flexible.
+
+* **uproot** provides support for reading and writing ROOT files without the need for an installation of ROOT. [See here for details.](https://github.com/scikit-hep/uproot4)
+* **ROOT** now natively supports converting objects into numpy arrays using either [directly using TTree](https://root.cern/doc/master/pyroot002__TTreeAsMatrix_8py.html) or with [the newer RDataFrame](https://root.cern.ch/doc/master/df026__AsNumpyArrays_8py.html).
+
 
 # root\_pandas: conveniently loading/saving ROOT files as pandas DataFrames
 
